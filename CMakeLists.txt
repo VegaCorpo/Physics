@@ -1,23 +1,58 @@
 cmake_minimum_required(VERSION 3.14)
 
-file(GLOB_RECURSE src "*.cpp")
-file(GLOB_RECURSE common_src "${CMAKE_SOURCE_DIR}/common/src/*.cpp")
+project(orbital_physics)
 
-add_library(orbital_physics SHARED ${src} ${common_src})
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+set(CMAKE_CXX_STANDARD 20 CACHE STRING "C++ standard")
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CPM_USE_LOCAL_PACKAGES ON)
 
-target_link_libraries(orbital_physics PRIVATE Eigen3::Eigen)
+include(cmake/CPM.cmake)
+CPMUsePackageLock(package-lock.cmake)
+CPMGetPackage("Eigen")
 
-target_include_directories(orbital_physics PRIVATE
-    ${CMAKE_SOURCE_DIR}/common/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/
-)
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release")
+endif()
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    if (MSVC)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zi /Od")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /DEBUG")
+    else()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -O0")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -g3 -O0")
+    endif()
+endif()
+
+if (CMAKE_BUILD_TYPE STREQUAL "Asan")
+    if (MSVC)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zi /Od")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /DEBUG")
+    else()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -O0 -fsanitize=address")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -g3 -O0 -fsanitize=address")
+    endif()
+endif()
 
 if(WIN32)
     target_compile_definitions(orbital_physics PRIVATE NOGDI NOUSER WIN32_LEAN_AND_MEAN)
 
     set(PROJECT_DIR ${CMAKE_SOURCE_DIR})
     set(BUILD_DIR ${CMAKE_BINARY_DIR})
-    set(PHYSICS_DIR "${BUILD_DIR}/physics/${CMAKE_BUILD_TYPE}")
+    set(PHYSICS_DIR "${BUILD_DIR}/Physics/${CMAKE_BUILD_TYPE}")
 
     set(TARGET_DIR "${PROJECT_DIR}")
 endif()
+
+add_library(orbital_physics SHARED
+    src/NewtonianEngine.cpp
+)
+
+target_link_libraries(orbital_physics PRIVATE Eigen3::Eigen)
+
+target_include_directories(orbital_physics PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/
+)
