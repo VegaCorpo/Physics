@@ -11,9 +11,9 @@ namespace physics {
 } // namespace physics
 
 extern "C++" {
-std::unique_ptr<physics::NewtonianEngine> get_physics_engine()
-{
-    std::cout << "Hello from physics engine" << std::endl;
-    return std::make_unique<physics::NewtonianEngine>();
-}
+    std::unique_ptr<physics::NewtonianEngine> get_physics_engine()
+    {
+        std::cout << "Hello from physics engine" << std::endl;
+        return std::make_unique<physics::NewtonianEngine>();
+    }
 }
