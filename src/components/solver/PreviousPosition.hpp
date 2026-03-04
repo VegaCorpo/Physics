@@ -4,7 +4,7 @@ namespace physics {
     namespace components {
         namespace solver {
             struct PreviousPosition {
-                    double value;
+                    float value;
             };
         } // namespace solver
     } // namespace components

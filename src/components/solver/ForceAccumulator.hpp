@@ -4,7 +4,7 @@ namespace physics {
     namespace components {
         namespace solver {
             struct ForceAccumulator {
-                    double value;
+                    float value;
             };
         } // namespace solver
     } // namespace components

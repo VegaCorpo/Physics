@@ -6,7 +6,9 @@ namespace physics {
     namespace components {
         namespace kinematics {
             struct Acceleration {
-                    Eigen::Vector3d value;
+                    float x;
+                    float y;
+                    float z;
             };
         } // namespace kinematics
     } // namespace components
