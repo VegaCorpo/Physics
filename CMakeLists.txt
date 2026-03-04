@@ -12,6 +12,7 @@ set(CPM_USE_LOCAL_PACKAGES ON)
 include(cmake/CPM.cmake)
 CPMUsePackageLock(package-lock.cmake)
 CPMGetPackage("Eigen")
+CPMGetPackage("EnTT")
 
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
@@ -48,10 +49,14 @@ if(WIN32)
 endif()
 
 add_library(orbital_physics SHARED
-    src/NewtonianEngine.cpp
+    src/PhysicsAPI.cpp
+    src/NewtonianPhysics.cpp
 )
 
-target_link_libraries(orbital_physics PRIVATE Eigen3::Eigen)
+target_link_libraries(orbital_physics PRIVATE
+    Eigen3::Eigen
+    EnTT::EnTT
+)
 
 target_include_directories(orbital_physics PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/
