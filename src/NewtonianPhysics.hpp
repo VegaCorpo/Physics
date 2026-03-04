@@ -1,5 +1,10 @@
 #pragma once
 
+#include <components/acceleration.hpp>
+#include <components/mass.hpp>
+#include <components/position.hpp>
+#include <components/velocity.hpp>
+
 #include <entt/entt.hpp>
 
 namespace physics {
@@ -31,5 +36,24 @@ namespace physics {
              * @return The name of the physics engine.
              */
             static std::string getName() { return "NewtonianPhysics"; }
+        private:
+            /**
+             * @brief Synchronize the physics components from the registry to the physics engine before updating.
+             *
+             * @param registry The entity registry containing the physics components to synchronize.
+             */
+            static void syncIn(entt::registry& registry);
+            /**
+             * @brief Synchronize the physics components from the physics engine back to the registry after updating.
+             *
+             * @param registry The entity registry to update with the latest physics component data.
+             */
+            static void syncOut(entt::registry& registry);
+            /**
+             * @brief Prepare the physics engine for the next simulation step (e.g., clear force accumulators).
+             *
+             * @param registry The entity registry containing the physics components to prepare.
+             */
+            static void prepareStep(entt::registry& registry);
     };
 } // namespace physics
