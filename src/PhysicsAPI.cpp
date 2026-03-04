@@ -1,21 +1,24 @@
 #include "PhysicsAPI.hpp"
 #include "NewtonianPhysics.hpp"
 
-static physics::NewtonianPhysics solver;
-
 extern "C++" {
+    std::string getName()
+    {
+        return physics::NewtonianPhysics::getName();
+    }
+
     void physicsInit(entt::registry& registry)
     {
-        solver.init(registry);
+        physics::NewtonianPhysics::init(registry);
     }
 
     void physicsUpdate(entt::registry& registry, double dt)
     {
-        solver.update(registry, dt);
+        physics::NewtonianPhysics::update(registry, dt);
     }
 
     void physicsShutdown(entt::registry& registry)
     {
-        solver.shutdown(registry);
+        physics::NewtonianPhysics::shutdown(registry);
     }
 }

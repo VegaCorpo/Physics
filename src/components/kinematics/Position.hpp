@@ -4,12 +4,10 @@
 
 namespace physics {
     namespace components {
-        namespace kinematics {
-            struct Position {
-                    float x;
-                    float y;
-                    float z;
-            };
-        } // namespace kinematics
+        struct Position {
+                float x;
+                float y;
+                float z;
+        };
     } // namespace components
 } // namespace physics

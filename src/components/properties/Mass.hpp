@@ -2,11 +2,9 @@
 
 namespace physics {
     namespace components {
-        namespace properties {
-            struct Mass {
-                    float mantissa;
-                    int exponent;
-            };
-        } // namespace properties
+        struct Mass {
+                float mantissa;
+                int exponent;
+        };
     } // namespace components
 } // namespace physics

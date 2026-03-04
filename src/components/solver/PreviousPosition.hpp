@@ -2,10 +2,8 @@
 
 namespace physics {
     namespace components {
-        namespace solver {
-            struct PreviousPosition {
-                    float value;
-            };
-        } // namespace solver
+        struct PreviousPosition {
+                float value;
+        };
     } // namespace components
 } // namespace physics

@@ -2,10 +2,8 @@
 
 namespace physics {
     namespace components {
-        namespace solver {
-            struct ForceAccumulator {
-                    float value;
-            };
-        } // namespace solver
+        struct ForceAccumulator {
+                float value;
+        };
     } // namespace components
 } // namespace physics

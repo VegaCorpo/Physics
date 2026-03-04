@@ -10,19 +10,26 @@ namespace physics {
              *
              * @param registry The entity registry to use for storing physics components.
              */
-            void init(entt::registry& registry);
+            static void init(entt::registry& registry);
             /**
              * @brief Update the physics simulation by a given time step.
              *
              * @param registry The entity registry containing the physics components.
              * @param dt The time step to advance the simulation by.
              */
-            void update(entt::registry& registry, double dt);
+            static void update(entt::registry& registry, double dt);
             /**
              * @brief Shutdown the physics engine and clean up resources.
              *
              * @param registry The entity registry to clean up physics components from.
              */
-            void shutdown(entt::registry& registry);
+            static void shutdown(entt::registry& registry);
+
+            /**
+             * @brief Get the name of the physics engine.
+             *
+             * @return The name of the physics engine.
+             */
+            static std::string getName() { return "NewtonianPhysics"; }
     };
 } // namespace physics
