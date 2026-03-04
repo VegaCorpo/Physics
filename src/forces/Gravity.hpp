@@ -6,7 +6,7 @@ namespace physics {
     namespace forces {
         class Gravity {
             public:
-                static std::string get_type() { return "Gravity"; };
+                static std::string getType() { return "Gravity"; };
         };
     } // namespace forces
 } // namespace physics

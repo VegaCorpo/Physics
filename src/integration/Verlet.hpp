@@ -6,7 +6,7 @@ namespace physics {
     namespace integration {
         class Verlet {
             public:
-                static std::string get_type() { return "Verlet"; };
+                static std::string getType() { return "Verlet"; };
         };
     } // namespace integration
 } // namespace physics
