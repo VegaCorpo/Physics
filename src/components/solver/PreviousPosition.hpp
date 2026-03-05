@@ -3,7 +3,9 @@
 namespace physics {
     namespace components {
         struct PreviousPosition {
-                float value;
+                float x;
+                float y;
+                float z;
         };
     } // namespace components
 } // namespace physics

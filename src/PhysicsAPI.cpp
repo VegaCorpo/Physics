@@ -21,4 +21,14 @@ extern "C++" {
     {
         physics::NewtonianPhysics::shutdown(registry);
     }
+
+    void physicsSyncIn(entt::registry& registry)
+    {
+        physics::NewtonianPhysics::syncIn(registry);
+    }
+
+    void physicsSyncOut(entt::registry& registry)
+    {
+        physics::NewtonianPhysics::syncOut(registry);
+    }
 }

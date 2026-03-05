@@ -13,6 +13,7 @@ include(cmake/CPM.cmake)
 CPMUsePackageLock(package-lock.cmake)
 CPMGetPackage("Eigen")
 CPMGetPackage("EnTT")
+CPMGetPackage("Common")
 
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
@@ -56,8 +57,10 @@ add_library(orbital_physics SHARED
 target_link_libraries(orbital_physics PRIVATE
     Eigen3::Eigen
     EnTT::EnTT
+    Common
 )
 
 target_include_directories(orbital_physics PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/
+    ${Common_SOURCE_DIR}/include
 )
