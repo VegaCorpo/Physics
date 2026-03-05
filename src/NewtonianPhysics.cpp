@@ -52,7 +52,8 @@ void physics::NewtonianPhysics::prepareStep(entt::registry& registry)
 {
     auto view = registry.view<physics::components::ForceAccumulator>();
 
-    for (auto [entity, forceAccumulator] : view.each()) {
+    for (auto entity : view) {
+        auto& forceAccumulator = view.get<physics::components::ForceAccumulator>(entity);
         forceAccumulator = {};
     }
 }
