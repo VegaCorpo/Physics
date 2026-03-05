@@ -47,7 +47,6 @@ orbital-engine
 .cache
 
 #build
-cmake
 build
 compile_commands.json
 plugins
