@@ -1,25 +1,25 @@
 #include "NewtonianPhysics.hpp"
-#include "forces/Gravity.hpp"
 #include "components/kinematics/Acceleration.hpp"
 #include "components/kinematics/Position.hpp"
 #include "components/kinematics/Velocity.hpp"
 #include "components/properties/Mass.hpp"
 #include "components/solver/ForceAccumulator.hpp"
 #include "components/solver/PreviousPosition.hpp"
+#include "forces/Gravity.hpp"
 
 //? Public methods
 
-void physics::NewtonianPhysics::init(entt::registry& registry)
+void physics::NewtonianPhysics::init(entt::registry& /*registry*/)
 {
-    syncIn(registry);
+    // No specific initialization needed for now
 }
 
-void physics::NewtonianPhysics::update(entt::registry& registry, double dt)
+void physics::NewtonianPhysics::update(entt::registry& registry, double /*dt*/)
 {
-    prepareStep(registry);
-    // forces::Gravity::accumulate(registry, static_cast<float>(dt));
+    physics::NewtonianPhysics::prepareStep(registry);
+    // forces::Gravity::apply(registry, static_cast<float>(dt));
     // Integrator
-    syncOut(registry);
+    physics::NewtonianPhysics::syncOut(registry);
 }
 
 void physics::NewtonianPhysics::shutdown(entt::registry& registry)
@@ -36,37 +36,17 @@ void physics::NewtonianPhysics::shutdown(entt::registry& registry)
 
 void physics::NewtonianPhysics::syncIn(entt::registry& registry)
 {
-    auto view = registry.view<const components::Position, const components::Velocity, const components::Acceleration,
-                              const components::Mass>();
-
-    for (auto [entity, position, velocity, acceleration, mass] : view.each()) {
-        if (!registry.all_of<physics::components::Position>(entity)) {
-            registry.emplace<physics::components::Position>(entity, 0.0, 0.0, 0.0);
-            registry.emplace<physics::components::Velocity>(entity, 0.0, 0.0, 0.0);
-            registry.emplace<physics::components::Acceleration>(entity, 0.0, 0.0, 0.0);
-            registry.emplace<physics::components::Mass>(entity, 1.0, 0);
-            registry.emplace<physics::components::ForceAccumulator>(entity, 0.0, 0.0, 0.0);
-            registry.emplace<physics::components::PreviousPosition>(entity, 0.0, 0.0, 0.0);
-        }
-        registry.get<physics::components::Position>(entity) = {position.x, position.y, position.z};
-        registry.get<physics::components::Velocity>(entity) = {velocity.x, velocity.y, velocity.z};
-        registry.get<physics::components::Acceleration>(entity) = {acceleration.x, acceleration.y, acceleration.z};
-        registry.get<physics::components::Mass>(entity) = {mass.mantissa, mass.exponent};
-    }
+    syncPositionToPhysics(registry);
+    syncVelocityToPhysics(registry);
+    syncAccelerationToPhysics(registry);
+    syncMassToPhysics(registry);
 }
 
 void physics::NewtonianPhysics::syncOut(entt::registry& registry)
 {
-    auto view = registry.view<const physics::components::Position, const physics::components::Velocity,
-                              const physics::components::Acceleration>();
-
-    for (auto [entity, position, velocity, acceleration] : view.each()) {
-        if (registry.all_of<components::Position>(entity)) {
-            registry.get<components::Position>(entity) = {position.x, position.y, position.z};
-            registry.get<components::Velocity>(entity) = {velocity.x, velocity.y, velocity.z};
-            registry.get<components::Acceleration>(entity) = {acceleration.x, acceleration.y, acceleration.z};
-        }
-    }
+    syncPositionToCore(registry);
+    syncVelocityToCore(registry);
+    syncAccelerationToCore(registry);
 }
 
 void physics::NewtonianPhysics::prepareStep(entt::registry& registry)
@@ -74,6 +54,76 @@ void physics::NewtonianPhysics::prepareStep(entt::registry& registry)
     auto view = registry.view<physics::components::ForceAccumulator>();
 
     for (auto [entity, forceAccumulator] : view.each()) {
-        forceAccumulator = {0.0, 0.0, 0.0};
+        forceAccumulator = {};
+    }
+}
+
+void physics::NewtonianPhysics::syncPositionToPhysics(entt::registry& registry)
+{
+    auto view = registry.view<components::Position>();
+
+    for (auto [entity, position] : view.each()) {
+        auto& physicsPosition = registry.get_or_emplace<physics::components::Position>(entity);
+        physicsPosition = {position.x, position.y, position.z};
+    }
+}
+
+void physics::NewtonianPhysics::syncVelocityToPhysics(entt::registry& registry)
+{
+    auto view = registry.view<components::Velocity>();
+
+    for (auto [entity, velocity] : view.each()) {
+        auto& physicsVelocity = registry.get_or_emplace<physics::components::Velocity>(entity);
+        physicsVelocity = {velocity.x, velocity.y, velocity.z};
+    }
+}
+
+void physics::NewtonianPhysics::syncAccelerationToPhysics(entt::registry& registry)
+{
+    auto view = registry.view<components::Acceleration>();
+
+    for (auto [entity, acceleration] : view.each()) {
+        auto& physicsAcceleration = registry.get_or_emplace<physics::components::Acceleration>(entity);
+        physicsAcceleration = {acceleration.x, acceleration.y, acceleration.z};
+    }
+}
+
+void physics::NewtonianPhysics::syncMassToPhysics(entt::registry& registry)
+{
+    auto view = registry.view<components::Mass>();
+
+    for (auto [entity, mass] : view.each()) {
+        auto& physicsMass = registry.get_or_emplace<physics::components::Mass>(entity);
+        physicsMass = {mass.mantissa, mass.exponent};
+    }
+}
+
+void physics::NewtonianPhysics::syncPositionToCore(entt::registry& registry)
+{
+    auto view = registry.view<const physics::components::Position>();
+
+    for (auto [entity, position] : view.each()) {
+        auto& corePosition = registry.get_or_emplace<components::Position>(entity);
+        corePosition = {position.x, position.y, position.z};
+    }
+}
+
+void physics::NewtonianPhysics::syncVelocityToCore(entt::registry& registry)
+{
+    auto view = registry.view<const physics::components::Velocity>();
+
+    for (auto [entity, velocity] : view.each()) {
+        auto& coreVelocity = registry.get_or_emplace<components::Velocity>(entity);
+        coreVelocity = {velocity.x, velocity.y, velocity.z};
+    }
+}
+
+void physics::NewtonianPhysics::syncAccelerationToCore(entt::registry& registry)
+{
+    auto view = registry.view<const physics::components::Acceleration>();
+
+    for (auto [entity, acceleration] : view.each()) {
+        auto& coreAcceleration = registry.get_or_emplace<components::Acceleration>(entity);
+        coreAcceleration = {acceleration.x, acceleration.y, acceleration.z};
     }
 }
