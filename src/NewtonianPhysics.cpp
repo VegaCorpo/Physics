@@ -14,10 +14,10 @@ void physics::NewtonianPhysics::init(entt::registry& /*registry*/)
     // No specific initialization needed for now
 }
 
-void physics::NewtonianPhysics::update(entt::registry& registry, double /*dt*/)
+void physics::NewtonianPhysics::update(entt::registry& registry, double dt)
 {
     physics::NewtonianPhysics::prepareStep(registry);
-    // forces::Gravity::apply(registry, static_cast<float>(dt));
+    forces::Gravity::apply(registry, static_cast<float>(dt));
     // Integrator
 }
 
