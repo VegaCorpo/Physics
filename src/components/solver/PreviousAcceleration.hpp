@@ -2,10 +2,10 @@
 
 namespace physics {
     namespace components {
-        struct PreviousPosition {
-                float x;
-                float y;
-                float z;
+        struct PreviousAcceleration {
+                double x;
+                double y;
+                double z;
         };
     } // namespace components
 } // namespace physics

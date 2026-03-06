@@ -1,12 +1,15 @@
 #pragma once
 
-#include <string>
+#include <entt/entt.hpp>
 
 namespace physics {
     namespace integration {
         class Verlet {
             public:
-                static std::string getType() { return "Verlet"; };
+                static void integrate(entt::registry& registry, double dt);
+            private:
+                static void _computeAcceleration(entt::registry& registry);
+                static void _updatePositionAndVelocity(entt::registry& registry, double dt);
         };
     } // namespace integration
 } // namespace physics
