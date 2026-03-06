@@ -15,12 +15,12 @@ CPMGetPackage("Eigen")
 CPMGetPackage("EnTT")
 CPMGetPackage("Common")
 
-if (NOT CMAKE_BUILD_TYPE)
+if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    if (MSVC)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    if(MSVC)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zi /Od")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /DEBUG")
     else()
@@ -29,8 +29,8 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     endif()
 endif()
 
-if (CMAKE_BUILD_TYPE STREQUAL "Asan")
-    if (MSVC)
+if(CMAKE_BUILD_TYPE STREQUAL "Asan")
+    if(MSVC)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zi /Od")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /DEBUG")
     else()
@@ -52,6 +52,7 @@ endif()
 add_library(orbital_physics SHARED
     src/PhysicsAPI.cpp
     src/NewtonianPhysics.cpp
+    src/forces/Gravity.cpp
 )
 
 target_link_libraries(orbital_physics PRIVATE

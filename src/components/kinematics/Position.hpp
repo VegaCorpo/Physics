@@ -1,7 +1,5 @@
 #pragma once
 
-#include <Eigen/Core>
-
 namespace physics {
     namespace components {
         struct Position {
