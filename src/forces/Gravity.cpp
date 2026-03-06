@@ -4,51 +4,45 @@
 
 void physics::forces::Gravity::apply(entt::registry& registry, double /*dt*/)
 {
-    auto view =
-        registry
-            .view<physics::components::Position, physics::components::Mass, physics::components::ForceAccumulator>();
+    registry.view<components::Mass>().each(
+        [&](auto entity, const auto& m)
+        { registry.emplace_or_replace<components::ScalarMass>(entity, computeScalarMass(m)); });
 
-    for (auto entityA : view) {
-        const auto& posA = view.get<components::Position>(entityA);
-        const auto& massA = view.get<components::Mass>(entityA);
-        auto& forceA = view.get<components::ForceAccumulator>(entityA);
+    auto view = registry.view<components::Position, components::ScalarMass, components::ForceAccumulator>();
 
-        double m1 = computeMassValue(massA);
+    auto& posPool = registry.storage<components::Position>();
+    auto& massPool = registry.storage<components::ScalarMass>();
+    auto& forcePool = registry.storage<components::ForceAccumulator>();
 
-        for (auto entityB : view) {
-            if (entityA >= entityB) {
-                continue;
-            }
+    for (auto it = view.begin(); it != view.end(); ++it) {
+        const auto entityA = *it;
+        const auto& posA = posPool.get(entityA);
+        const auto& mA = massPool.get(entityA);
+        auto& forceA = forcePool.get(entityA);
 
-            const auto& posB = view.get<components::Position>(entityB);
-            const auto& massB = view.get<components::Mass>(entityB);
-            auto& forceB = view.get<components::ForceAccumulator>(entityB);
-            double m2 = computeMassValue(massB);
+        for (auto jt = std::next(it); jt != view.end(); ++jt) {
+            const auto entityB = *jt;
+            const auto& posB = posPool.get(entityB);
+            const auto& mB = massPool.get(entityB);
+            auto& forceB = forcePool.get(entityB);
 
-            applyPairwiseGravity(posA, posB, m1, m2, forceA, forceB);
+            const auto disp = computeDisplacement(posA, posB);
+            const auto invDist = computeInverseDistance(disp);
+            const auto magnitude = G * mA.value * mB.value * invDist.invDistCubed;
+            accumulateForce(forceA, forceB, disp, magnitude);
         }
     }
 }
 
 //? Private methods
 
-void physics::forces::Gravity::applyPairwiseGravity(const components::Position& posA, const components::Position& posB,
-                                                    double m1, double m2, components::ForceAccumulator& forceA,
-                                                    components::ForceAccumulator& forceB)
+void physics::forces::Gravity::accumulateForce(components::ForceAccumulator& forceA,
+                                               components::ForceAccumulator& forceB,
+                                               const components::Displacement& disp, double magnitude)
 {
-    double dx = posB.x - posA.x;
-    double dy = posB.y - posA.y;
-    double dz = posB.z - posA.z;
-
-    double distanceSquared = dx * dx + dy * dy + dz * dz + EPSILON * EPSILON;
-    double invDistance = 1.0 / std::sqrt(distanceSquared);
-    double invDistanceCubed = invDistance * invDistance * invDistance;
-
-    double forceMagnitude = computeForceMagnitude(m1, m2, invDistanceCubed);
-
-    double fx = forceMagnitude * dx;
-    double fy = forceMagnitude * dy;
-    double fz = forceMagnitude * dz;
+    double fx = magnitude * disp.dx;
+    double fy = magnitude * disp.dy;
+    double fz = magnitude * disp.dz;
 
     forceA.x += fx;
     forceA.y += fy;
@@ -59,12 +53,23 @@ void physics::forces::Gravity::applyPairwiseGravity(const components::Position& 
     forceB.z -= fz;
 }
 
-double physics::forces::Gravity::computeMassValue(const components::Mass& mass)
+physics::components::Displacement
+physics::forces::Gravity::computeDisplacement(const physics::components::Position& posA,
+                                              const physics::components::Position& posB)
 {
-    return mass.mantissa * std::pow(10.0, mass.exponent);
+    return {posB.x - posA.x, posB.y - posA.y, posB.z - posA.z};
 }
 
-double physics::forces::Gravity::computeForceMagnitude(double m1, double m2, double invDistanceCubed)
+physics::components::InverseDistance
+physics::forces::Gravity::computeInverseDistance(const physics::components::Displacement& disp)
 {
-    return G * m1 * m2 * invDistanceCubed;
+    double r2 = disp.dx * disp.dx + disp.dy * disp.dy + disp.dz * disp.dz + EPSILON * EPSILON;
+    double invDist = 1.0 / std::sqrt(r2);
+
+    return {invDist * invDist * invDist};
+}
+
+physics::components::ScalarMass physics::forces::Gravity::computeScalarMass(const physics::components::Mass& mass)
+{
+    return {mass.mantissa * std::pow(10.0, mass.exponent)};
 }
