@@ -53,6 +53,7 @@ add_library(orbital_physics SHARED
     src/PhysicsAPI.cpp
     src/NewtonianPhysics.cpp
     src/forces/Gravity.cpp
+    src/events/Gravity.cpp
 )
 
 target_link_libraries(orbital_physics PRIVATE
@@ -62,6 +63,6 @@ target_link_libraries(orbital_physics PRIVATE
 )
 
 target_include_directories(orbital_physics PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${Common_SOURCE_DIR}/include
 )

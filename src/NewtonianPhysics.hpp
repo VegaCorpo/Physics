@@ -6,6 +6,7 @@
 #include <components/velocity.hpp>
 
 #include <entt/entt.hpp>
+#include <entt/signal/fwd.hpp>
 
 namespace physics {
     class NewtonianPhysics {
@@ -14,16 +15,18 @@ namespace physics {
              * @brief Initialize the physics engine and synchronize existing entities.
              *
              * @param registry The entity registry containing the entities to initialize.
+             * @param dispatcher to delay function executions.
              */
-            static void init(entt::registry& registry);
+            static void init(entt::registry& registry, entt::dispatcher& dispatcher);
 
             /**
              * @brief Advance the physics simulation by one time step.
              *
              * @param registry The entity registry containing the physics components.
+             * @param dispatcher to delay function executions.
              * @param dt The time step in seconds.
              */
-            static void update(entt::registry& registry, double dt);
+            static void update(entt::registry& registry, entt::dispatcher& dispatcher, double dt);
 
             /**
              * @brief Shutdown the physics engine and remove all private physics components from the registry.
@@ -54,8 +57,6 @@ namespace physics {
             static std::string getName() { return "NewtonianPhysics"; }
 
         private:
-            static void prepareStep(entt::registry& registry);
-
             // --- Sync In helpers : copy Core components into private Physics components ---
 
             static void syncPositionToPhysics(entt::registry& registry);
