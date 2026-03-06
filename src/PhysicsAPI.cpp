@@ -1,5 +1,6 @@
 #include "PhysicsAPI.hpp"
 #include <cstring>
+#include <entt/signal/fwd.hpp>
 #include <iostream>
 #include "entt/entity/registry.hpp"
 #include "NewtonianPhysics.hpp"
@@ -10,17 +11,19 @@ extern "C" {
         return physics::NewtonianPhysics::getName();
     }
 
-    void physicsInit(void* registry_ptr)
+    void physicsInit(void* registry_ptr, void* dispatcher_ptr)
     {
         auto& registry = *static_cast<entt::registry*>(registry_ptr);
-        physics::NewtonianPhysics::init(registry);
+        auto& dispatcher = *static_cast<entt::dispatcher*>(dispatcher_ptr);
+        physics::NewtonianPhysics::init(registry, dispatcher);
     }
 
-    void physicsUpdate(void* registry_ptr, double dt)
+    void physicsUpdate(void* registry_ptr, void* dispatcher_ptr, double dt)
     {
         auto& registry = *static_cast<entt::registry*>(registry_ptr);
+        auto& dispatcher = *static_cast<entt::dispatcher*>(dispatcher_ptr);
         std::cout << "Hello from physics update" << std::endl;
-        physics::NewtonianPhysics::update(registry, dt);
+        physics::NewtonianPhysics::update(registry, dispatcher, dt);
     }
 
     void physicsShutdown(void* registry_ptr)
