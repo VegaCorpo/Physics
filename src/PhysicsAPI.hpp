@@ -1,12 +1,12 @@
 #pragma once
 
-#include <entt/entt.hpp>
+#include <string>
 
-extern "C++" {
+extern "C" {
     std::string getName();
-    void physicsInit(entt::registry& registry);
-    void physicsUpdate(entt::registry& registry, double dt);
-    void physicsShutdown(entt::registry& registry);
-    void physicsSyncIn(entt::registry& registry);
-    void physicsSyncOut(entt::registry& registry);
+    void physicsInit(void* registry_ptr);
+    void physicsUpdate(void* registry_ptr, double dt);
+    void physicsShutdown(void* registry_ptr);
+    void physicsSyncIn(void* registry_ptr);
+    void physicsSyncOut(void* registry_ptr);
 }
