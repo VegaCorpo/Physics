@@ -4,10 +4,6 @@
 
 void physics::forces::Gravity::apply(entt::registry& registry, double /*dt*/)
 {
-    registry.view<components::Mass>().each(
-        [&](auto entity, const auto& m)
-        { registry.emplace_or_replace<components::ScalarMass>(entity, computeScalarMass(m)); });
-
     auto view = registry.view<components::Position, components::ScalarMass, components::ForceAccumulator>();
 
     auto& posPool = registry.storage<components::Position>();
@@ -26,12 +22,17 @@ void physics::forces::Gravity::apply(entt::registry& registry, double /*dt*/)
             const auto& mB = massPool.get(entityB);
             auto& forceB = forcePool.get(entityB);
 
-            const auto disp = computeDisplacement(posA, posB);
-            const auto invDist = computeInverseDistance(disp);
-            const auto magnitude = G * mA.value * mB.value * invDist.invDistCubed;
-            accumulateForce(forceA, forceB, disp, magnitude);
+            const auto disp = forces::Gravity::computeDisplacement(posA, posB);
+            const auto invDist = forces::Gravity::computeInverseDistance(disp);
+            const auto magnitude = forces::Gravity::G * mA.value * mB.value * invDist.invDistCubed;
+            forces::Gravity::accumulateForce(forceA, forceB, disp, magnitude);
         }
     }
+}
+
+physics::components::ScalarMass physics::forces::Gravity::computeScalarMass(const physics::components::Mass& mass)
+{
+    return {mass.mantissa * std::pow(10.0, mass.exponent)};
 }
 
 //? Private methods
@@ -63,13 +64,9 @@ physics::forces::Gravity::computeDisplacement(const physics::components::Positio
 physics::components::InverseDistance
 physics::forces::Gravity::computeInverseDistance(const physics::components::Displacement& disp)
 {
-    double r2 = disp.dx * disp.dx + disp.dy * disp.dy + disp.dz * disp.dz + EPSILON * EPSILON;
+    double r2 =
+        disp.dx * disp.dx + disp.dy * disp.dy + disp.dz * disp.dz + forces::Gravity::EPSILON * forces::Gravity::EPSILON;
     double invDist = 1.0 / std::sqrt(r2);
 
     return {invDist * invDist * invDist};
-}
-
-physics::components::ScalarMass physics::forces::Gravity::computeScalarMass(const physics::components::Mass& mass)
-{
-    return {mass.mantissa * std::pow(10.0, mass.exponent)};
 }

@@ -17,7 +17,7 @@ namespace physics {
                  * @param dt The time step to advance the simulation.
                  */
                 static void apply(entt::registry& registry, double dt);
-
+                static components::ScalarMass computeScalarMass(const components::Mass& mass);
             private:
                 static constexpr double G = 6.67430e-11; // Gravitational constant
                 static constexpr double EPSILON = 1e-6; // Small value to prevent division by zero
@@ -27,7 +27,6 @@ namespace physics {
                 static components::Displacement computeDisplacement(const components::Position& posA,
                                                                     const components::Position& posB);
                 static components::InverseDistance computeInverseDistance(const components::Displacement& disp);
-                static components::ScalarMass computeScalarMass(const components::Mass& mass);
                 static double inverseDistance(double distance);
         }; // namespace Gravity
     } // namespace forces

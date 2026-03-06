@@ -9,9 +9,11 @@
 
 //? Public methods
 
-void physics::NewtonianPhysics::init(entt::registry& /*registry*/)
+void physics::NewtonianPhysics::init(entt::registry& registry)
 {
-    // No specific initialization needed for now
+    registry.view<components::Mass>().each(
+        [&](auto entity, const auto& m)
+        { registry.emplace_or_replace<components::ScalarMass>(entity, physics::forces::Gravity::computeScalarMass(m)); });
 }
 
 void physics::NewtonianPhysics::update(entt::registry& registry, double dt)
