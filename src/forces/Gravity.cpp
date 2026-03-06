@@ -1,31 +1,35 @@
 #include "Gravity.hpp"
+#include <entt/signal/fwd.hpp>
+#include <iostream>
+#include "components/GravityCache.hpp"
+#include "components/kinematics/Position.hpp"
+#include "components/properties/Mass.hpp"
+#include "components/solver/ForceAccumulator.hpp"
+#include "events/Gravity.hpp"
 
 //? Public methods
 
-void physics::forces::Gravity::apply(entt::registry& registry, double /*dt*/)
+void physics::forces::Gravity::apply(entt::registry& registry, entt::dispatcher& dispatcher, double /*dt*/)
 {
     auto view = registry.view<components::Position, components::ScalarMass, components::ForceAccumulator>();
 
-    auto& posPool = registry.storage<components::Position>();
-    auto& massPool = registry.storage<components::ScalarMass>();
-    auto& forcePool = registry.storage<components::ForceAccumulator>();
+    for (auto entityA : view) {
+        events::GravityParams paramsA{};
 
-    for (auto it = view.begin(); it != view.end(); ++it) {
-        const auto entityA = *it;
-        const auto& posA = posPool.get(entityA);
-        const auto& mA = massPool.get(entityA);
-        auto& forceA = forcePool.get(entityA);
+        paramsA.position = view.get<components::Position>(entityA);
+        paramsA.mass = view.get<components::ScalarMass>(entityA);
+        paramsA.force = view.get<components::ForceAccumulator>(entityA);
 
-        for (auto jt = std::next(it); jt != view.end(); ++jt) {
-            const auto entityB = *jt;
-            const auto& posB = posPool.get(entityB);
-            const auto& mB = massPool.get(entityB);
-            auto& forceB = forcePool.get(entityB);
+        for (auto entityB : view) {
+            if (entityB <= entityA)
+                continue;
+            events::GravityParams paramsB{};
 
-            const auto disp = forces::Gravity::computeDisplacement(posA, posB);
-            const auto invDist = forces::Gravity::computeInverseDistance(disp);
-            const auto magnitude = forces::Gravity::G * mA.value * mB.value * invDist.invDistCubed;
-            forces::Gravity::accumulateForce(forceA, forceB, disp, magnitude);
+            paramsB.position = view.get<components::Position>(entityB);
+            paramsB.mass = view.get<components::ScalarMass>(entityB);
+            paramsB.force = view.get<components::ForceAccumulator>(entityB);
+
+            dispatcher.enqueue<events::PairGravityParams>({paramsA, paramsB});
         }
     }
 }
