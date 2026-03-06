@@ -13,6 +13,4 @@ void physics::events::ApplyPairGravityForce::apply(physics::events::PairGravityP
     const auto invDist = forces::Gravity::computeInverseDistance(disp);
     const auto magnitude = forces::Gravity::G * corpsA.mass.value * corpsB.mass.value * invDist.invDistCubed;
     forces::Gravity::accumulateForce(corpsA.force, corpsB.force, disp, magnitude);
-    std::cout << std::format("Hello from applyPairGravityForce {} {}", corpsA.position.x, corpsB.position.x)
-              << std::endl;
 }
