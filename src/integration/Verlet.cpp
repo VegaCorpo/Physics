@@ -23,6 +23,10 @@ void physics::integration::Verlet::_computeAcceleration(entt::registry& registry
 
     for (auto [entity, force, mass, acc, prevAcc] : view.each()) {
         prevAcc = {acc.x, acc.y, acc.z};
+        if (mass.value == 0.0) {
+            acc = {0.0, 0.0, 0.0};
+            continue;
+        }
 
         // Compute acceleration: a = F / m
         acc.x = force.x / mass.value;
@@ -36,15 +40,18 @@ void physics::integration::Verlet::_updatePositionAndVelocity(entt::registry& re
     auto view = registry.view<physics::components::Position, physics::components::Velocity,
                               physics::components::Acceleration, physics::components::PreviousAcceleration>();
 
+    auto halfDtSquared = 0.5 * dt * dt;
+    auto halfDt = 0.5 * dt;
+
     for (auto [entity, pos, vel, acc, prevAcc] : view.each()) {
         // Update position: x(t + dt) = x(t) + v(t) * dt + 0.5 * a(t) * dt^2
-        pos.x += vel.x * dt + 0.5 * prevAcc.x * dt * dt;
-        pos.y += vel.y * dt + 0.5 * prevAcc.y * dt * dt;
-        pos.z += vel.z * dt + 0.5 * prevAcc.z * dt * dt;
+        pos.x += vel.x * dt + halfDtSquared * prevAcc.x;
+        pos.y += vel.y * dt + halfDtSquared * prevAcc.y;
+        pos.z += vel.z * dt + halfDtSquared * prevAcc.z;
 
         // Update velocity: v(t + dt) = v(t) + 0.5 * (a(t) + a(t + dt)) * dt
-        vel.x += 0.5 * (prevAcc.x + acc.x) * dt;
-        vel.y += 0.5 * (prevAcc.y + acc.y) * dt;
-        vel.z += 0.5 * (prevAcc.z + acc.z) * dt;
+        vel.x += (prevAcc.x + acc.x) * halfDt;
+        vel.y += (prevAcc.y + acc.y) * halfDt;
+        vel.z += (prevAcc.z + acc.z) * halfDt;
     }
 }
