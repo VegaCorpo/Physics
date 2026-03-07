@@ -1,12 +1,10 @@
 #include "NewtonianPhysics.hpp"
 #include <entt/signal/fwd.hpp>
-#include <iostream>
 #include "components/kinematics/Acceleration.hpp"
 #include "components/kinematics/Position.hpp"
 #include "components/kinematics/Velocity.hpp"
 #include "components/properties/Mass.hpp"
 #include "components/solver/ForceAccumulator.hpp"
-#include "components/solver/PreviousPosition.hpp"
 #include "events/Gravity.hpp"
 #include "forces/Gravity.hpp"
 
@@ -43,7 +41,6 @@ void physics::NewtonianPhysics::shutdown(entt::registry& registry)
     registry.clear<physics::components::Acceleration>();
     registry.clear<physics::components::Mass>();
     registry.clear<physics::components::ForceAccumulator>();
-    registry.clear<physics::components::PreviousPosition>();
 }
 
 //? Private methods

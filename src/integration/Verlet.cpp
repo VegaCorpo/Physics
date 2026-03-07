@@ -19,10 +19,9 @@ void physics::integration::Verlet::integrate(entt::registry& registry, double dt
 void physics::integration::Verlet::_computeAcceleration(entt::registry& registry)
 {
     auto view = registry.view<physics::components::ForceAccumulator, physics::components::ScalarMass,
-                              physics::components::Acceleration, physics::components::PreviousAcceleration,
-                              physics::components::Position>();
+                              physics::components::Acceleration, physics::components::PreviousAcceleration>();
 
-    for (auto [entity, force, mass, acc, prevAcc, pos] : view.each()) {
+    for (auto [entity, force, mass, acc, prevAcc] : view.each()) {
         prevAcc = {acc.x, acc.y, acc.z};
 
         // Compute acceleration: a = F / m
