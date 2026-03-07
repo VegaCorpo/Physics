@@ -5,8 +5,10 @@
 #include "components/kinematics/Velocity.hpp"
 #include "components/properties/Mass.hpp"
 #include "components/solver/ForceAccumulator.hpp"
+#include "components/solver/PreviousAcceleration.hpp"
 #include "events/Gravity.hpp"
 #include "forces/Gravity.hpp"
+#include "integration/Verlet.hpp"
 
 //? Public methods
 
@@ -22,6 +24,7 @@ void physics::NewtonianPhysics::init(entt::registry& registry, entt::dispatcher&
         registry.emplace_or_replace<components::ScalarMass>(
             entity, physics::forces::Gravity::computeScalarMass({mass.mantissa, mass.exponent}));
         registry.emplace_or_replace<components::ForceAccumulator>(entity);
+        registry.emplace_or_replace<components::PreviousAcceleration>(entity);
     }
 
     dispatcher.sink<events::PairGravityParams>().connect<&events::ApplyPairGravityForce::apply>();
@@ -31,7 +34,8 @@ void physics::NewtonianPhysics::update(entt::registry& registry, entt::dispatche
 {
     forces::Gravity::apply(registry, dispatcher, static_cast<float>(dt));
     dispatcher.update<events::PairGravityParams>();
-    // Integrator
+    integration::Verlet::integrate(registry, dt);
+    NewtonianPhysics::syncOut(registry);
 }
 
 void physics::NewtonianPhysics::shutdown(entt::registry& registry)

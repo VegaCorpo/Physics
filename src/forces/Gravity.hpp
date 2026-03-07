@@ -7,8 +7,7 @@
 #include "components/properties/Mass.hpp"
 #include "components/solver/ForceAccumulator.hpp"
 
-namespace physics {
-    namespace forces {
+namespace physics::forces {
         class Gravity {
             public:
                 /**
@@ -31,5 +30,4 @@ namespace physics {
                 static constexpr double EPSILON = 1e-6; // Small value to prevent division by zero
             private:
         }; // namespace Gravity
-    } // namespace forces
-} // namespace physics
+} // namespace physics::forces

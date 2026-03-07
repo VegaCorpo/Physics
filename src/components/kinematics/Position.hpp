@@ -1,11 +1,9 @@
 #pragma once
 
-namespace physics {
-    namespace components {
+namespace physics::components {
         struct Position {
                 double x;
                 double y;
                 double z;
         };
-    } // namespace components
-} // namespace physics
+} // namespace physics::components

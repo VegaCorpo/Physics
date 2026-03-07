@@ -32,6 +32,8 @@ void physics::integration::Verlet::_computeAcceleration(entt::registry& registry
         acc.x = force.x / mass.value;
         acc.y = force.y / mass.value;
         acc.z = force.z / mass.value;
+
+        force = {0.0, 0.0, 0.0};
     }
 }
 
