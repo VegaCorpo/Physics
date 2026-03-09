@@ -9,9 +9,9 @@
 namespace physics::events {
 
     struct GravityParams {
-            components::ScalarMass* mass;
-            components::Position* position;
-            components::ForceAccumulator* force;
+            components::ScalarMass& mass;
+            components::Position& position;
+            components::ForceAccumulator& force;
     };
 
     struct PairGravityParams {

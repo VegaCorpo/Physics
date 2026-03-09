@@ -13,16 +13,16 @@ void physics::forces::Gravity::apply(entt::registry& registry, entt::dispatcher&
     auto view = registry.view<components::Position, components::ScalarMass, components::ForceAccumulator>();
 
     for (auto entityA : view) {
-        events::GravityParams paramsA{.mass = &view.get<components::ScalarMass>(entityA),
-                                      .position = &view.get<components::Position>(entityA),
-                                      .force = &view.get<components::ForceAccumulator>(entityA)};
+        events::GravityParams paramsA{.mass = view.get<components::ScalarMass>(entityA),
+                                      .position = view.get<components::Position>(entityA),
+                                      .force = view.get<components::ForceAccumulator>(entityA)};
 
         for (auto entityB : view) {
             if (entityB <= entityA)
                 continue;
-            events::GravityParams paramsB{.mass = &view.get<components::ScalarMass>(entityB),
-                                          .position = &view.get<components::Position>(entityB),
-                                          .force = &view.get<components::ForceAccumulator>(entityB)};
+            events::GravityParams paramsB{.mass = view.get<components::ScalarMass>(entityB),
+                                          .position = view.get<components::Position>(entityB),
+                                          .force = view.get<components::ForceAccumulator>(entityB)};
 
             dispatcher.enqueue<events::PairGravityParams>({paramsA, paramsB});
         }
