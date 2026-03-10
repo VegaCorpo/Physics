@@ -27,7 +27,7 @@ void physics::NewtonianPhysics::init(entt::registry& registry, entt::dispatcher&
         registry.emplace_or_replace<components::PreviousAcceleration>(entity);
     }
 
-    dispatcher.sink<events::PairGravityParams>().connect<&events::ApplyPairGravityForce::apply>(registry);
+    dispatcher.sink<events::PairGravityParams>().connect<&events::ApplyPairGravityForce::apply>();
 }
 
 void physics::NewtonianPhysics::update(entt::registry& registry, entt::dispatcher& dispatcher, double dt)
