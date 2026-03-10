@@ -54,6 +54,7 @@ add_library(orbital_physics SHARED
     src/NewtonianPhysics.cpp
     src/forces/Gravity.cpp
     src/events/Gravity.cpp
+    src/integration/Verlet.cpp
 )
 
 target_link_libraries(orbital_physics PRIVATE

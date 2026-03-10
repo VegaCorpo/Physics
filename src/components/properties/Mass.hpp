@@ -1,10 +1,8 @@
 #pragma once
 
-namespace physics {
-    namespace components {
+namespace physics::components {
         struct Mass {
                 float mantissa;
                 int exponent;
         };
-    } // namespace components
-} // namespace physics
+} // namespace physics::components

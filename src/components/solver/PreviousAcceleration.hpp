@@ -1,7 +1,7 @@
 #pragma once
 
 namespace physics::components {
-        struct ForceAccumulator {
+        struct PreviousAcceleration {
                 double x;
                 double y;
                 double z;
