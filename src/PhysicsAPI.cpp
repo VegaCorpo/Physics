@@ -22,7 +22,6 @@ extern "C" {
     {
         auto& registry = *static_cast<entt::registry*>(registry_ptr);
         auto& dispatcher = *static_cast<entt::dispatcher*>(dispatcher_ptr);
-        std::cout << "Hello from physics update" << std::endl;
         physics::NewtonianPhysics::update(registry, dispatcher, dt);
     }
 

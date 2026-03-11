@@ -26,7 +26,7 @@ namespace physics::forces {
                 static components::InverseDistance computeInverseDistance(const components::Displacement& disp);
                 static double inverseDistance(double distance);
 
-                static constexpr double G = 6.67430e-11; // Gravitational constant
+                static constexpr double G = 6.67430e-20; // Gravitational constant
                 static constexpr double EPSILON = 1e-6; // Small value to prevent division by zero
             private:
         }; // namespace Gravity
