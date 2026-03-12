@@ -50,3 +50,7 @@ orbital-engine
 build
 compile_commands.json
 plugins
+
+#GTests
+*.info
+coverage_report/

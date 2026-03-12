@@ -21,3 +21,11 @@ CPMDeclarePackage(Common
         SYSTEM YES
         EXCLUDE_FROM_ALL YES
 )
+
+#GTest
+CPMDeclarePackage(GTest
+    NAME GTest
+    GITHUB_REPOSITORY google/googletest
+    VERSION 1.14.0
+    OPTIONS "INSTALL_GTEST OFF" "gtest_force_shared_crt ON"
+)

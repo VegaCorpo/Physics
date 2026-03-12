@@ -49,6 +49,17 @@ if(WIN32)
     set(TARGET_DIR "${PROJECT_DIR}")
 endif()
 
+include(CTest)
+if(BUILD_TESTING)
+    CPMGetPackage("GTest")
+    add_subdirectory(tests)
+endif()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g --coverage")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+endif()
+
 add_library(orbital_physics SHARED
     src/PhysicsAPI.cpp
     src/NewtonianPhysics.cpp
