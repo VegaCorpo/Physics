@@ -14,6 +14,7 @@ CPMUsePackageLock(package-lock.cmake)
 CPMGetPackage("Eigen")
 CPMGetPackage("EnTT")
 CPMGetPackage("Common")
+CPMGetPackage("TBB")
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
@@ -61,6 +62,7 @@ target_link_libraries(orbital_physics PRIVATE
     Eigen3::Eigen
     EnTT::EnTT
     Common
+    TBB::tbb
 )
 
 target_include_directories(orbital_physics PRIVATE
