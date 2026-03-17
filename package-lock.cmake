@@ -21,3 +21,10 @@ CPMDeclarePackage(Common
         SYSTEM YES
         EXCLUDE_FROM_ALL YES
 )
+
+CPMDeclarePackage(TBB
+        GIT_TAG v2022.3.0
+        GITHUB_REPOSITORY uxlfoundation/oneTBB
+        SYSTEM YES
+        EXCLUDE_FROM_ALL YES
+)
