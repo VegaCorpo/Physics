@@ -1,0 +1,35 @@
+name: Check Compilation
+
+on:
+  workflow_call:
+    inputs:
+      executable:
+        required: True
+        type: string
+
+jobs:
+    check-compilation:
+        runs-on: ubuntu-latest
+        name: Compile submodule
+        steps:
+          - name: Checkout Branch
+            uses: actions/checkout@v4
+
+          - name: Get Cmake
+            uses: awalsh128/cache-apt-pkgs-action@latest
+            with:
+                packages: cmake
+
+          - name: Compile Repo
+            run:  |
+                cmake -S . -B .build
+                cmake --build .build
+
+          - name: Check binary presence
+            run: |
+                if [ ! -f .build/${{ inputs.executable }} ]; then
+                    echo "::error title=Binary
+                    ERROR::Binary not found"
+                    exit 1
+                fi
+                exit 0
