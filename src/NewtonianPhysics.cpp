@@ -34,8 +34,9 @@ void physics::NewtonianPhysics::init(entt::registry& registry, entt::dispatcher&
 
 void physics::NewtonianPhysics::update(entt::registry& registry, entt::dispatcher& dispatcher, double dt)
 {
-    forces::Gravity::apply(registry, dispatcher, static_cast<float>(dt));
-    integration::Verlet::integrate(registry, dt);
+    integration::Verlet::preIntegrate(registry, dt);
+    forces::Gravity::apply(registry, dispatcher, dt);
+    integration::Verlet::postIntegrate(registry, dt);
 }
 
 void physics::NewtonianPhysics::shutdown(entt::registry& registry)

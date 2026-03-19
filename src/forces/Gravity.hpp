@@ -19,17 +19,24 @@ namespace physics::forces {
             static void apply(entt::registry& registry, entt::dispatcher& dispatcher, double dt);
 
             static components::ScalarMass computeScalarMass(const components::Mass& mass);
-            static void accumulateForce(components::ForceAccumulator& forceA, components::ForceAccumulator& forceB,
-                                        const components::Displacement& disp, double magnitude);
+
+        private:
+            static void _initVectors(size_t estimatedCount);
+
+            static void _computeGravity(size_t count);
+
+            static void _accumulateForce(entt::registry& registry, size_t count);
+
             static components::Displacement computeDisplacement(const components::Position& posA,
                                                                 const components::Position& posB);
+
             static components::InverseDistance computeInverseDistance(const components::Displacement& disp);
+
             static double inverseDistance(double distance);
 
             static constexpr double G = 6.67430e-20; // Gravitational constant
             static constexpr double EPSILON = 1e-6; // Small value to prevent division by zero
 
-        private:
             inline static std::vector<entt::entity> _entities;
             inline static std::vector<double> _posX, _posY, _posZ, _mass;
             inline static std::vector<double> _outForceX, _outForceY, _outForceZ;
