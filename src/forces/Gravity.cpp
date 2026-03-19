@@ -10,7 +10,6 @@
 #include "components/kinematics/Position.hpp"
 #include "components/properties/Mass.hpp"
 #include "components/solver/ForceAccumulator.hpp"
-#include "events/Gravity.hpp"
 
 //? Public methods
 void physics::forces::Gravity::apply(entt::registry& registry, entt::dispatcher& dispatcher, double /*dt*/)

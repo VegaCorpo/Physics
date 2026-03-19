@@ -10,7 +10,6 @@
 #include "components/solver/ForceAccumulator.hpp"
 #include "components/solver/PreviousAcceleration.hpp"
 #include "components/velocity.hpp"
-#include "events/Gravity.hpp"
 #include "forces/Gravity.hpp"
 #include "integration/Verlet.hpp"
 
