@@ -77,7 +77,7 @@ void physics::forces::Gravity::_computeGravity(const size_t count)
                       const double myPx = posX[i];
                       const double myPy = posY[i];
                       const double myPz = posZ[i];
-                      const double myMass = mass[i];
+                      const double myMassG = mass[i] * G;
 
                       for (size_t j = 0; j < count; ++j) {
                           double dx = posX[j] - myPx;
@@ -86,12 +86,8 @@ void physics::forces::Gravity::_computeGravity(const size_t count)
 
                           double r2 = dx * dx + dy * dy + dz * dz + EPSILON2;
                           double r = std::sqrt(r2);
-
-                          // double invDist = 1.0 / std::sqrt(r2);
-                          // double invDist3 = invDist * invDist * invDist;
                           double invDist3 = 1 / (r * r2);
-
-                          double mag = G * myMass * mass[j] * invDist3;
+                          double mag = myMassG * mass[j] * invDist3;
 
                           accFx += mag * dx;
                           accFy += mag * dy;
