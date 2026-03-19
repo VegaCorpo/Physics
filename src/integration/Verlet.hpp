@@ -3,12 +3,11 @@
 #include <entt/entt.hpp>
 
 namespace physics::integration {
-        class Verlet {
-            public:
-                static void integrate(entt::registry& registry, double dt);
+    class Verlet {
+        public:
+            static void preIntegrate(entt::registry& registry, double dt);
+            static void postIntegrate(entt::registry& registry, double dt);
 
-            private:
-                static void _computeAcceleration(entt::registry& registry);
-                static void _updatePositionAndVelocity(entt::registry& registry, double dt);
-        };
+        private:
+    };
 } // namespace physics::integration
