@@ -1,9 +1,8 @@
 #include "Verlet.hpp"
 #include "../components/kinematics/Position.hpp"
 #include "../components/kinematics/Velocity.hpp"
-#include "../components/solver/ForceAccumulator.hpp"
-// Assurez-vous d'inclure le bon chemin pour ScalarMass selon votre arborescence
 #include "../components/properties/Mass.hpp"
+#include "../components/solver/ForceAccumulator.hpp"
 #include "components/GravityCache.hpp"
 
 void physics::integration::Verlet::preIntegrate(entt::registry& registry, double dt)
