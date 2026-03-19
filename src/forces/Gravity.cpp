@@ -1,5 +1,11 @@
 #include "Gravity.hpp"
+#include <algorithm>
+#include <boost/iterator/counting_iterator.hpp>
+#include <cstddef>
+#include <entt/entity/fwd.hpp>
 #include <entt/signal/fwd.hpp>
+#include <execution>
+#include <oneapi/tbb/parallel_for_each.h>
 #include "components/GravityCache.hpp"
 #include "components/kinematics/Position.hpp"
 #include "components/properties/Mass.hpp"
@@ -12,20 +18,77 @@ void physics::forces::Gravity::apply(entt::registry& registry, entt::dispatcher&
 {
     auto view = registry.view<components::Position, components::ScalarMass, components::ForceAccumulator>();
 
-    for (auto entityA : view) {
-        events::GravityParams paramsA{.mass = &view.get<components::ScalarMass>(entityA),
-                                      .position = &view.get<components::Position>(entityA),
-                                      .force = &view.get<components::ForceAccumulator>(entityA)};
+    const size_t estimatedCount = view.size_hint();
+    _entities.clear();
+    _posX.clear();
+    _posY.clear();
+    _posZ.clear();
+    _mass.clear();
 
-        for (auto entityB : view) {
-            if (entityB <= entityA)
-                continue;
-            events::GravityParams paramsB{.mass = &view.get<components::ScalarMass>(entityB),
-                                          .position = &view.get<components::Position>(entityB),
-                                          .force = &view.get<components::ForceAccumulator>(entityB)};
+    _entities.reserve(estimatedCount);
+    _posX.reserve(estimatedCount);
+    _posY.reserve(estimatedCount);
+    _posZ.reserve(estimatedCount);
+    _mass.reserve(estimatedCount);
 
-            dispatcher.enqueue<events::PairGravityParams>({paramsA, paramsB});
-        }
+    view.each(
+        [&](entt::entity entity, const components::Position& pos, const components::ScalarMass& mass,
+            const components::ForceAccumulator&)
+        {
+            _entities.push_back(entity);
+            _posX.push_back(pos.x);
+            _posY.push_back(pos.y);
+            _posZ.push_back(pos.z);
+            _mass.push_back(mass.value);
+        });
+
+    const size_t count = _entities.size();
+
+    _outForceX.assign(estimatedCount, 0.0);
+    _outForceY.assign(estimatedCount, 0.0);
+    _outForceZ.assign(estimatedCount, 0.0);
+
+    const double* px = _posX.data();
+    const double* py = _posY.data();
+    const double* pz = _posZ.data();
+    const double* m = _mass.data();
+    double* fx = _outForceX.data();
+    double* fy = _outForceY.data();
+    double* fz = _outForceZ.data();
+
+    std::for_each(std::execution::par_unseq, boost::counting_iterator<size_t>(0),
+                  boost::counting_iterator<size_t>(count),
+                  [=](size_t i)
+                  {
+                      double accFx = 0.0, accFy = 0.0, accFz = 0.0;
+                      const double myPx = px[i], myPy = py[i], myPz = pz[i], myMass = m[i];
+
+                      for (size_t j = 0; j < count; ++j) {
+                          if (i == j)
+                              continue;
+
+                          double dx = px[j] - myPx;
+                          double dy = py[j] - myPy;
+                          double dz = pz[j] - myPz;
+
+                          double r2 = dx * dx + dy * dy + dz * dz + EPSILON * EPSILON;
+                          double invDist = 1.0 / std::sqrt(r2);
+                          double mag = G * myMass * m[j] * (invDist * invDist * invDist);
+
+                          accFx += mag * dx;
+                          accFy += mag * dy;
+                          accFz += mag * dz;
+                      }
+                      fx[i] = accFx;
+                      fy[i] = accFy;
+                      fz[i] = accFz;
+                  });
+
+    for (size_t i = 0; i < count; ++i) {
+        auto& force = registry.get<components::ForceAccumulator>(_entities[i]);
+        force.x += fx[i];
+        force.y += fy[i];
+        force.z += fz[i];
     }
 }
 
