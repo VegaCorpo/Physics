@@ -1,13 +1,20 @@
 #pragma once
 
+#include <boost/align/aligned_allocator.hpp>
 #include <entt/entt.hpp>
 #include <entt/signal/fwd.hpp>
+#include <experimental/simd>
 #include "components/GravityCache.hpp"
 #include "components/kinematics/Position.hpp"
 #include "components/properties/Mass.hpp"
 #include "components/solver/ForceAccumulator.hpp"
 
 namespace physics::forces {
+
+    constexpr double G = 6.67430e-20; // Gravitational constant
+    constexpr double EPSILON = 1e-6; // Small value to prevent division by zero
+    constexpr double EPSILON2 = EPSILON * EPSILON;
+
     class Gravity {
         public:
             /**
@@ -34,11 +41,15 @@ namespace physics::forces {
 
             static double inverseDistance(double distance);
 
-            static constexpr double G = 6.67430e-20; // Gravitational constant
-            static constexpr double EPSILON = 1e-6; // Small value to prevent division by zero
-
             inline static std::vector<entt::entity> _entities;
-            inline static std::vector<double> _posX, _posY, _posZ, _mass;
-            inline static std::vector<double> _outForceX, _outForceY, _outForceZ;
+
+            inline static std::vector<double> _posX;
+            inline static std::vector<double> _posY;
+            inline static std::vector<double> _posZ;
+            inline static std::vector<double> _mass;
+
+            inline static std::vector<double> _outForceX;
+            inline static std::vector<double> _outForceY;
+            inline static std::vector<double> _outForceZ;
     }; // namespace Gravity
 } // namespace physics::forces

@@ -23,12 +23,13 @@ if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "Release")
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    CPMGetPackage("TBB")
     if(MSVC)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zi /Od")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zi /O2")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /DEBUG")
     else()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -O0")
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -g3 -O0")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3 -fno-omit-frame-pointer -march=native")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -g -O3")
     endif()
 endif()
 
@@ -64,7 +65,9 @@ target_link_libraries(orbital_physics PRIVATE
     EnTT::EnTT
     Common
     Boost::iterator
+    Boost::align
     $<$<CONFIG:Release>:TBB::tbb>
+    $<$<CONFIG:Debug>:TBB::tbb>
 )
 
 target_include_directories(orbital_physics PRIVATE

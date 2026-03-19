@@ -5,6 +5,7 @@
 #include <entt/entity/fwd.hpp>
 #include <entt/signal/fwd.hpp>
 #include <execution>
+#include <memory>
 #include <oneapi/tbb/parallel_for_each.h>
 #include "components/GravityCache.hpp"
 #include "components/kinematics/Position.hpp"
@@ -73,16 +74,24 @@ void physics::forces::Gravity::_computeGravity(const size_t count)
                   [=](size_t i)
                   {
                       double accFx = 0.0, accFy = 0.0, accFz = 0.0;
-                      const double myPx = posX[i], myPy = posY[i], myPz = posZ[i], myMass = mass[i];
+                      const double myPx = posX[i];
+                      const double myPy = posY[i];
+                      const double myPz = posZ[i];
+                      const double myMass = mass[i];
 
                       for (size_t j = 0; j < count; ++j) {
                           double dx = posX[j] - myPx;
                           double dy = posY[j] - myPy;
                           double dz = posZ[j] - myPz;
 
-                          double r2 = dx * dx + dy * dy + dz * dz + EPSILON * EPSILON;
-                          double invDist = 1.0 / std::sqrt(r2);
-                          double mag = G * myMass * mass[j] * (invDist * invDist * invDist);
+                          double r2 = dx * dx + dy * dy + dz * dz + EPSILON2;
+                          double r = std::sqrt(r2);
+
+                          // double invDist = 1.0 / std::sqrt(r2);
+                          // double invDist3 = invDist * invDist * invDist;
+                          double invDist3 = 1 / (r * r2);
+
+                          double mag = G * myMass * mass[j] * invDist3;
 
                           accFx += mag * dx;
                           accFy += mag * dy;
@@ -123,8 +132,7 @@ physics::forces::Gravity::computeDisplacement(const physics::components::Positio
 physics::components::InverseDistance
 physics::forces::Gravity::computeInverseDistance(const physics::components::Displacement& disp)
 {
-    double r2 =
-        disp.dx * disp.dx + disp.dy * disp.dy + disp.dz * disp.dz + forces::Gravity::EPSILON * forces::Gravity::EPSILON;
+    double r2 = disp.dx * disp.dx + disp.dy * disp.dy + disp.dz * disp.dz + EPSILON2;
     double invDist = 1.0 / std::sqrt(r2);
 
     return {invDist * invDist * invDist};
