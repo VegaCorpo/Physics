@@ -10,7 +10,6 @@
 #include "components/solver/ForceAccumulator.hpp"
 #include "components/solver/PreviousAcceleration.hpp"
 #include "components/velocity.hpp"
-#include "events/Gravity.hpp"
 #include "forces/Gravity.hpp"
 #include "integration/Verlet.hpp"
 
@@ -30,16 +29,13 @@ void physics::NewtonianPhysics::init(entt::registry& registry, entt::dispatcher&
         registry.emplace_or_replace<components::ForceAccumulator>(entity);
         registry.emplace_or_replace<components::PreviousAcceleration>(entity);
     }
-
-    dispatcher.sink<events::PairGravityParams>().connect<&events::ApplyPairGravityForce::apply>();
 }
 
 void physics::NewtonianPhysics::update(entt::registry& registry, entt::dispatcher& dispatcher, double dt)
 {
-    forces::Gravity::apply(registry, dispatcher, static_cast<float>(dt));
-    dispatcher.update<events::PairGravityParams>();
-    integration::Verlet::integrate(registry, dt);
-    NewtonianPhysics::syncOut(registry);
+    integration::Verlet::preIntegrate(registry, dt);
+    forces::Gravity::apply(registry, dispatcher, dt);
+    integration::Verlet::postIntegrate(registry, dt);
 }
 
 void physics::NewtonianPhysics::shutdown(entt::registry& registry)
