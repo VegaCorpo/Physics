@@ -1,9 +1,9 @@
 #pragma once
 
 namespace physics::components {
-        struct ForceAccumulator {
-                double x;
-                double y;
-                double z;
-        };
+    struct alignas(16) ForceAccumulator {
+            double x;
+            double y;
+            double z;
+    };
 } // namespace physics::components

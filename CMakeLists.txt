@@ -20,15 +20,17 @@ CPMGetPackage("Boost")
 if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "Release")
     CPMGetPackage("TBB")
     set(CMAKE_BUILD_TYPE "Release")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fno-omit-frame-pointer -march=x86-64-v3 -ffast-math")
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    CPMGetPackage("TBB")
     if(MSVC)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zi /Od")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zi /O2")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /DEBUG")
     else()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -O0")
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -g3 -O0")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3 -fno-omit-frame-pointer -march=x86-64-v3 -ffast-math")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -g -O3")
     endif()
 endif()
 
@@ -37,8 +39,8 @@ if(CMAKE_BUILD_TYPE STREQUAL "Asan")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zi /Od")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /DEBUG")
     else()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -O0 -fsanitize=address")
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -g3 -O0 -fsanitize=address")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -O3 -fsanitize=address")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -g3 -O3 -fsanitize=address")
     endif()
 endif()
 
@@ -64,7 +66,9 @@ target_link_libraries(orbital_physics PRIVATE
     EnTT::EnTT
     Common
     Boost::iterator
+    Boost::align
     $<$<CONFIG:Release>:TBB::tbb>
+    $<$<CONFIG:Debug>:TBB::tbb>
 )
 
 target_include_directories(orbital_physics PRIVATE
