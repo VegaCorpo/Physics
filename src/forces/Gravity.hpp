@@ -28,28 +28,10 @@ namespace physics::forces {
             static components::ScalarMass computeScalarMass(const components::Mass& mass);
 
         private:
-            static void _initVectors(size_t estimatedCount);
-
-            static void _computeGravity(size_t count);
-
-            static void _accumulateForce(entt::registry& registry, size_t count);
-
-            static components::Displacement computeDisplacement(const components::Position& posA,
-                                                                const components::Position& posB);
+            static void _computeGravity(entt::registry& registry, size_t count);
 
             static components::InverseDistance computeInverseDistance(const components::Displacement& disp);
 
             static double inverseDistance(double distance);
-
-            inline static std::vector<entt::entity> _entities;
-
-            inline static std::vector<double> _posX;
-            inline static std::vector<double> _posY;
-            inline static std::vector<double> _posZ;
-            inline static std::vector<double> _mass;
-
-            inline static std::vector<double> _outForceX;
-            inline static std::vector<double> _outForceY;
-            inline static std::vector<double> _outForceZ;
     }; // namespace Gravity
 } // namespace physics::forces

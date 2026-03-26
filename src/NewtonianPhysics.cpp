@@ -40,7 +40,9 @@ void physics::NewtonianPhysics::update(entt::registry& registry, entt::dispatche
 
 void physics::NewtonianPhysics::shutdown(entt::registry& registry)
 {
-    registry.clear<physics::components::Position>();
+    registry.clear<physics::components::PositionX>();
+    registry.clear<physics::components::PositionY>();
+    registry.clear<physics::components::PositionZ>();
     registry.clear<physics::components::Velocity>();
     registry.clear<physics::components::Acceleration>();
     registry.clear<physics::components::Mass>();
@@ -70,8 +72,13 @@ void physics::NewtonianPhysics::syncPositionToPhysics(entt::registry& registry)
 
     for (auto entity : view) {
         const auto& position = view.get<::common::components::Position>(entity);
-        auto& physicsPosition = registry.get_or_emplace<physics::components::Position>(entity);
-        physicsPosition = {position.x, position.y, position.z};
+
+        auto& physicsPositionX = registry.get_or_emplace<physics::components::PositionX>(entity);
+        physicsPositionX.value = position.x;
+        auto& physicsPositionY = registry.get_or_emplace<physics::components::PositionY>(entity);
+        physicsPositionY.value = position.y;
+        auto& physicsPositionZ = registry.get_or_emplace<physics::components::PositionZ>(entity);
+        physicsPositionZ.value = position.z;
     }
 }
 
@@ -110,12 +117,16 @@ void physics::NewtonianPhysics::syncMassToPhysics(entt::registry& registry)
 
 void physics::NewtonianPhysics::syncPositionToCore(entt::registry& registry)
 {
-    auto view = registry.view<physics::components::Position>();
+    auto view =
+        registry.view<physics::components::PositionX, physics::components::PositionY, physics::components::PositionZ>();
 
     for (auto entity : view) {
-        const auto& position = view.get<physics::components::Position>(entity);
+        const auto& positionX = view.get<physics::components::PositionX>(entity);
+        const auto& positionY = view.get<physics::components::PositionY>(entity);
+        const auto& positionZ = view.get<physics::components::PositionZ>(entity);
+
         auto& corePosition = registry.get_or_emplace<::common::components::Position>(entity);
-        corePosition = {position.x, position.y, position.z};
+        corePosition = {positionX.value, positionY.value, positionZ.value};
     }
 }
 

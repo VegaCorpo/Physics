@@ -7,13 +7,16 @@
 
 void physics::integration::Verlet::preIntegrate(entt::registry& registry, double dt)
 {
-    auto view = registry.view<physics::components::Position, physics::components::Velocity,
+    auto view = registry.view<physics::components::PositionX, physics::components::PositionY,
+                              physics::components::PositionZ, physics::components::Velocity,
                               physics::components::ForceAccumulator, physics::components::ScalarMass>();
 
     const double halfDt = 0.5 * dt;
 
     for (auto entity : view) {
-        auto& pos = view.get<physics::components::Position>(entity);
+        auto& posX = view.get<physics::components::PositionX>(entity);
+        auto& posY = view.get<physics::components::PositionY>(entity);
+        auto& posZ = view.get<physics::components::PositionZ>(entity);
         auto& vel = view.get<physics::components::Velocity>(entity);
         auto& force = view.get<physics::components::ForceAccumulator>(entity);
         const auto& mass = view.get<physics::components::ScalarMass>(entity);
@@ -29,9 +32,9 @@ void physics::integration::Verlet::preIntegrate(entt::registry& registry, double
         vel.y += ay * halfDt;
         vel.z += az * halfDt;
 
-        pos.x += vel.x * dt;
-        pos.y += vel.y * dt;
-        pos.z += vel.z * dt;
+        posX.value += vel.x * dt;
+        posY.value += vel.y * dt;
+        posZ.value += vel.z * dt;
 
         force = {0.0, 0.0, 0.0};
     }

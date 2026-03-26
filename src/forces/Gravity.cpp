@@ -5,8 +5,11 @@
 #include <entt/entity/fwd.hpp>
 #include <entt/signal/fwd.hpp>
 #include <execution>
+#include <iostream>
 #include <memory>
+#include <numeric>
 #include <oneapi/tbb/parallel_for_each.h>
+#include <oneapi/tbb/parallel_reduce.h>
 #include "components/GravityCache.hpp"
 #include "components/kinematics/Position.hpp"
 #include "components/properties/Mass.hpp"
@@ -15,114 +18,63 @@
 //? Public methods
 void physics::forces::Gravity::apply(entt::registry& registry, entt::dispatcher& dispatcher, double /*dt*/)
 {
-    auto view = registry.view<components::Position, components::ScalarMass, components::ForceAccumulator>();
-    const size_t estimatedCount = view.size_hint();
+    auto view = registry.group<components::PositionX, components::PositionY, components::PositionZ,
+                               components::ScalarMass, components::ForceAccumulator>();
+    const size_t count = view.size();
 
-    _initVectors(estimatedCount);
-
-    view.each(
-        [&](entt::entity entity, const components::Position& pos, const components::ScalarMass& mass,
-            const components::ForceAccumulator&)
-        {
-            _entities.push_back(entity);
-            _posX.push_back(pos.x);
-            _posY.push_back(pos.y);
-            _posZ.push_back(pos.z);
-            _mass.push_back(mass.value);
-        });
-
-    const size_t count = _entities.size();
-
-    _computeGravity(count);
-
-    _accumulateForce(registry, count);
+    _computeGravity(registry, count);
 }
 
 //? Private methods
 
-void physics::forces::Gravity::_initVectors(const size_t estimatedCount)
+void physics::forces::Gravity::_computeGravity(entt::registry& registry, const size_t count)
 {
-    _entities.clear();
-    _posX.clear();
-    _posY.clear();
-    _posZ.clear();
-    _mass.clear();
+    auto group = registry.group<components::PositionX, components::PositionY, components::PositionZ,
+                                components::ScalarMass, components::ForceAccumulator>();
 
-    _entities.reserve(estimatedCount);
-    _posX.reserve(estimatedCount);
-    _posY.reserve(estimatedCount);
-    _posZ.reserve(estimatedCount);
-    _mass.reserve(estimatedCount);
+    const components::PositionX* __restrict posX = *group.storage<components::PositionX>()->raw();
+    const components::PositionY* __restrict posY = *group.storage<components::PositionY>()->raw();
+    const components::PositionZ* __restrict posZ = *group.storage<components::PositionZ>()->raw();
+    const components::ScalarMass* __restrict mass = *group.storage<components::ScalarMass>()->raw();
 
-    _outForceX.assign(estimatedCount, 0.0);
-    _outForceY.assign(estimatedCount, 0.0);
-    _outForceZ.assign(estimatedCount, 0.0);
-}
+    std::for_each(
+        std::execution::par_unseq, boost::counting_iterator<size_t>(0), boost::counting_iterator<size_t>(count),
+        [=](size_t i)
+        {
+            components::ForceAccumulator* __restrict forceAcc = *group.storage<components::ForceAccumulator>()->raw();
+            const double myPx = posX[i].value;
+            const double myPy = posY[i].value;
+            const double myPz = posZ[i].value;
+            const double myMassG = mass[i].value * G;
 
-void physics::forces::Gravity::_computeGravity(const size_t count)
-{
-    const double* posX = _posX.data();
-    const double* posY = _posY.data();
-    const double* posZ = _posZ.data();
-    const double* mass = _mass.data();
-    double* forceX = _outForceX.data();
-    double* forceY = _outForceY.data();
-    double* forceZ = _outForceZ.data();
+            double accFx = 0.0;
+            double accFy = 0.0;
+            double accFz = 0.0;
 
-    std::for_each(std::execution::par_unseq, boost::counting_iterator<size_t>(0),
-                  boost::counting_iterator<size_t>(count),
-                  [=](size_t i)
-                  {
-                      double accFx = 0.0, accFy = 0.0, accFz = 0.0;
-                      const double myPx = posX[i];
-                      const double myPy = posY[i];
-                      const double myPz = posZ[i];
-                      const double myMassG = mass[i] * G;
+            for (size_t j = 0; j < count; j += 1) {
+                double dx = posX[j].value - myPx;
+                double dy = posY[j].value - myPy;
+                double dz = posZ[j].value - myPz;
 
-                      for (size_t j = 0; j < count; ++j) {
-                          double dx = posX[j] - myPx;
-                          double dy = posY[j] - myPy;
-                          double dz = posZ[j] - myPz;
+                double r2 = dx * dx + dy * dy + dz * dz + EPSILON2;
+                double invDist = 1 / std::sqrt(r2);
+                double invDist3 = invDist * invDist * invDist;
+                double mag = myMassG * mass[j].value * invDist3;
 
-                          double r2 = dx * dx + dy * dy + dz * dz + EPSILON2;
-                          double r = std::sqrt(r2);
-                          double invDist3 = 1 / (r * r2);
-                          double mag = myMassG * mass[j] * invDist3;
+                accFx += mag * dx;
+                accFy += mag * dy;
+                accFz += mag * dz;
+            };
 
-                          accFx += mag * dx;
-                          accFy += mag * dy;
-                          accFz += mag * dz;
-                      }
-                      forceX[i] = accFx;
-                      forceY[i] = accFy;
-                      forceZ[i] = accFz;
-                  });
-}
-
-void physics::forces::Gravity::_accumulateForce(entt::registry& registry, const size_t count)
-{
-    double* fx = _outForceX.data();
-    double* fy = _outForceY.data();
-    double* fz = _outForceZ.data();
-
-    for (size_t i = 0; i < count; ++i) {
-        auto& force = registry.get<components::ForceAccumulator>(_entities[i]);
-        force.x += fx[i];
-        force.y += fy[i];
-        force.z += fz[i];
-    }
+            forceAcc[i].x = accFx;
+            forceAcc[i].y = accFy;
+            forceAcc[i].z = accFz;
+        });
 }
 
 physics::components::ScalarMass physics::forces::Gravity::computeScalarMass(const physics::components::Mass& mass)
 {
     return {mass.mantissa * std::pow(10.0, mass.exponent)};
-}
-
-physics::components::Displacement
-physics::forces::Gravity::computeDisplacement(const physics::components::Position& posA,
-                                              const physics::components::Position& posB)
-{
-    return {posB.x - posA.x, posB.y - posA.y, posB.z - posA.z};
 }
 
 physics::components::InverseDistance
