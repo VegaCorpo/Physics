@@ -37,8 +37,8 @@ CPMDeclarePackage(Boost
 )
 
 # Google Benchmark
-CPMAddPackage(Benchmark
-    GITHUB_REPOSITORY google/benchmark
-    GIT_TAG v1.9.5
-    OPTIONS "BENCHMARK_ENABLE_GTEST_TESTS OFF"
-)
+# CPMAddPackage(Benchmark
+#     GITHUB_REPOSITORY google/benchmark
+#     GIT_TAG v1.9.5
+#     OPTIONS "BENCHMARK_ENABLE_GTEST_TESTS OFF"
+# )
