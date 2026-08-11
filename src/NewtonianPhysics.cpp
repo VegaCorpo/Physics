@@ -53,20 +53,20 @@ void physics::NewtonianPhysics::shutdown(entt::registry& registry)
 
 void physics::NewtonianPhysics::syncIn(entt::registry& registry)
 {
-    physics::NewtonianPhysics::syncPositionToPhysics(registry);
-    physics::NewtonianPhysics::syncVelocityToPhysics(registry);
-    physics::NewtonianPhysics::syncAccelerationToPhysics(registry);
-    physics::NewtonianPhysics::syncMassToPhysics(registry);
+    this->_syncPositionToPhysics(registry);
+    this->_syncVelocityToPhysics(registry);
+    this->_syncAccelerationToPhysics(registry);
+    this->_syncMassToPhysics(registry);
 }
 
 void physics::NewtonianPhysics::syncOut(entt::registry& registry)
 {
-    physics::NewtonianPhysics::syncPositionToCore(registry);
-    physics::NewtonianPhysics::syncVelocityToCore(registry);
-    physics::NewtonianPhysics::syncAccelerationToCore(registry);
+    this->_syncPositionToCore(registry);
+    this->_syncVelocityToCore(registry);
+    this->_syncAccelerationToCore(registry);
 }
 
-void physics::NewtonianPhysics::syncPositionToPhysics(entt::registry& registry)
+void physics::NewtonianPhysics::_syncPositionToPhysics(entt::registry& registry)
 {
     auto view = registry.view<::common::components::Position>();
 
@@ -82,7 +82,7 @@ void physics::NewtonianPhysics::syncPositionToPhysics(entt::registry& registry)
     }
 }
 
-void physics::NewtonianPhysics::syncVelocityToPhysics(entt::registry& registry)
+void physics::NewtonianPhysics::_syncVelocityToPhysics(entt::registry& registry)
 {
     auto view = registry.view<::common::components::Velocity>();
 
@@ -93,7 +93,7 @@ void physics::NewtonianPhysics::syncVelocityToPhysics(entt::registry& registry)
     }
 }
 
-void physics::NewtonianPhysics::syncAccelerationToPhysics(entt::registry& registry)
+void physics::NewtonianPhysics::_syncAccelerationToPhysics(entt::registry& registry)
 {
     auto view = registry.view<::common::components::Acceleration>();
 
@@ -104,7 +104,7 @@ void physics::NewtonianPhysics::syncAccelerationToPhysics(entt::registry& regist
     }
 }
 
-void physics::NewtonianPhysics::syncMassToPhysics(entt::registry& registry)
+void physics::NewtonianPhysics::_syncMassToPhysics(entt::registry& registry)
 {
     auto view = registry.view<::common::components::Mass>();
 
@@ -115,7 +115,7 @@ void physics::NewtonianPhysics::syncMassToPhysics(entt::registry& registry)
     }
 }
 
-void physics::NewtonianPhysics::syncPositionToCore(entt::registry& registry)
+void physics::NewtonianPhysics::_syncPositionToCore(entt::registry& registry) const
 {
     auto view =
         registry.view<physics::components::PositionX, physics::components::PositionY, physics::components::PositionZ>();
@@ -130,7 +130,7 @@ void physics::NewtonianPhysics::syncPositionToCore(entt::registry& registry)
     }
 }
 
-void physics::NewtonianPhysics::syncVelocityToCore(entt::registry& registry)
+void physics::NewtonianPhysics::_syncVelocityToCore(entt::registry& registry) const
 {
     auto view = registry.view<physics::components::Velocity>();
 
@@ -141,7 +141,7 @@ void physics::NewtonianPhysics::syncVelocityToCore(entt::registry& registry)
     }
 }
 
-void physics::NewtonianPhysics::syncAccelerationToCore(entt::registry& registry)
+void physics::NewtonianPhysics::_syncAccelerationToCore(entt::registry& registry) const
 {
     auto view = registry.view<physics::components::Acceleration>();
 

@@ -8,8 +8,10 @@
 #include <entt/entt.hpp>
 #include <entt/signal/fwd.hpp>
 
+#include <interfaces/IPhysicsEngine.hpp>
+
 namespace physics {
-    class NewtonianPhysics {
+    class NewtonianPhysics : public Physics::IPhysicsEngine {
         public:
             /**
              * @brief Initialize the physics engine and synchronize existing entities.
@@ -17,8 +19,10 @@ namespace physics {
              * @param registry The entity registry containing the entities to initialize.
              * @param dispatcher to delay function executions.
              */
-            static void init(entt::registry& registry, entt::dispatcher& dispatcher);
+            NewtonianPhysics() = default;
+            ~NewtonianPhysics() = default;
 
+            virtual void init(entt::registry &registry, entt::dispatcher &dispatcher) override;
             /**
              * @brief Advance the physics simulation by one time step.
              *
@@ -26,49 +30,49 @@ namespace physics {
              * @param dispatcher to delay function executions.
              * @param dt The time step in seconds.
              */
-            static void update(entt::registry& registry, entt::dispatcher& dispatcher, double dt);
+            void update(entt::registry& registry, entt::dispatcher& dispatcher, double dt) override;
 
             /**
              * @brief Shutdown the physics engine and remove all private physics components from the registry.
              *
              * @param registry The entity registry to clean up.
              */
-            static void shutdown(entt::registry& registry);
+            void shutdown(entt::registry& registry) override;
 
             /**
              * @brief Copy Core components into private Physics components before the simulation step.
              *
              * @param registry The entity registry to read from.
              */
-            static void syncIn(entt::registry& registry);
+            void syncIn(entt::registry& registry) override;
 
             /**
              * @brief Copy computed Physics components back into Core components after the simulation step.
              *
              * @param registry The entity registry to write to.
              */
-            static void syncOut(entt::registry& registry);
+            void syncOut(entt::registry& registry) override;
 
             /**
              * @brief Get the name of the physics engine.
              *
              * @return The name of the physics engine.
              */
-            static std::string getName() { return "NewtonianPhysics"; }
+            [[nodiscard]] std::string getName() const override { return "NewtonianPhysics"; }
 
         private:
             // --- Sync In helpers : copy Core components into private Physics components ---
 
-            static void syncPositionToPhysics(entt::registry& registry);
-            static void syncVelocityToPhysics(entt::registry& registry);
-            static void syncAccelerationToPhysics(entt::registry& registry);
-            static void syncMassToPhysics(entt::registry& registry);
+            void _syncPositionToPhysics(entt::registry& registry);
+            void _syncVelocityToPhysics(entt::registry& registry);
+            void _syncAccelerationToPhysics(entt::registry& registry);
+            void _syncMassToPhysics(entt::registry& registry);
 
             // --- Sync Out helpers : copy computed Physics components back into Core components ---
 
-            static void syncPositionToCore(entt::registry& registry);
-            static void syncVelocityToCore(entt::registry& registry);
-            static void syncAccelerationToCore(entt::registry& registry);
-            static void syncMassToCore(entt::registry& registry);
+            void _syncPositionToCore(entt::registry& registry) const;
+            void _syncVelocityToCore(entt::registry& registry) const;
+            void _syncAccelerationToCore(entt::registry& registry) const;
+            void _syncMassToCore(entt::registry& registry) const;
     };
 } // namespace physics
