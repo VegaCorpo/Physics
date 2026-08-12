@@ -5,5 +5,5 @@
 #include <interfaces/IPhysicsEngine.hpp>
 
 extern "C" {
-    std::unique_ptr<Physics::IPhysicsEngine> get_engine();
+    std::unique_ptr<common::IPhysicsEngine> get_engine();
 }

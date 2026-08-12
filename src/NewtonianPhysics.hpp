@@ -11,7 +11,7 @@
 #include <interfaces/IPhysicsEngine.hpp>
 
 namespace physics {
-    class NewtonianPhysics : public Physics::IPhysicsEngine {
+    class NewtonianPhysics : public common::IPhysicsEngine {
         public:
             /**
              * @brief Initialize the physics engine and synchronize existing entities.
