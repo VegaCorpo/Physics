@@ -1,13 +1,10 @@
 #pragma once
 
 #include <boost/align/aligned_allocator.hpp>
-#include <entt/entt.hpp>
-#include <entt/signal/fwd.hpp>
 #include <experimental/simd>
+#include <types/World.hpp>
 #include "components/GravityCache.hpp"
-#include "components/kinematics/Position.hpp"
 #include "components/properties/Mass.hpp"
-#include "components/solver/ForceAccumulator.hpp"
 
 namespace physics::forces {
 
@@ -23,12 +20,12 @@ namespace physics::forces {
              * @param registry The entity registry containing the physics components.
              * @param dt The time step to advance the simulation.
              */
-            static void apply(entt::registry& registry, entt::dispatcher& dispatcher, double dt);
+            static void apply(common::WorldState& world, double dt);
 
             static components::ScalarMass computeScalarMass(const components::Mass& mass);
 
         private:
-            static void _computeGravity(entt::registry& registry, size_t count);
+            static void _computeGravity(common::WorldState& world, size_t count);
 
             static components::InverseDistance computeInverseDistance(const components::Displacement& disp);
 
