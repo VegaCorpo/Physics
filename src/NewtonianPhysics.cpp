@@ -13,7 +13,7 @@ void physics::NewtonianPhysics::init(common::WorldState world)
 void physics::NewtonianPhysics::update(double dt)
 {
     integration::Verlet::preIntegrate(this->_world_state, dt);
-    forces::Gravity::apply(this->_world_state, dt);
+    forces::Gravity::apply(this->_world_state, this->_newtonian_state, dt);
     integration::Verlet::postIntegrate(this->_world_state, dt);
 }
 
@@ -25,10 +25,6 @@ void physics::NewtonianPhysics::shutdown()
 void physics::NewtonianPhysics::syncIn(common::WorldState world)
 {
     this->_world_state = world;
-    // this->_syncPositionToPhysics(registry);
-    // this->_syncVelocityToPhysics(registry);
-    // this->_syncAccelerationToPhysics(registry);
-    // this->_syncMassToPhysics(registry);
 }
 
 common::WorldState physics::NewtonianPhysics::syncOut()

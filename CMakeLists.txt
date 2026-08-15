@@ -20,7 +20,7 @@ CPMGetPackage("Boost")
 if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "Release")
     CPMGetPackage("TBB")
     set(CMAKE_BUILD_TYPE "Release")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fno-omit-frame-pointer -march=x86-64-v3 -ffast-math")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fno-omit-frame-pointer -march=x86-64-v3")
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")

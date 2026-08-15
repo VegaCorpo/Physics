@@ -1,6 +1,7 @@
 #pragma once
 
 #include <interfaces/IPhysicsEngine.hpp>
+#include "components/NewtonianState.hpp"
 
 namespace physics {
     class NewtonianPhysics : public common::IPhysicsEngine {
@@ -54,5 +55,6 @@ namespace physics {
 
         private:
             common::WorldState _world_state;
+            NewtonianState _newtonian_state;
     };
 } // namespace physics
