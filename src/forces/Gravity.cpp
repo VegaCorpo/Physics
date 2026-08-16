@@ -14,10 +14,8 @@ namespace {
 
 //? Public methods
 
-void physics::forces::Gravity::apply(const common::WorldState& world, NewtonianState& state, double /*dt*/)
+void physics::forces::Gravity::apply(NewtonianState& state, double /*dt*/)
 {
-    state.syncIn(world);
-
     if (state.size() == 0)
         return;
 
