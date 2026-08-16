@@ -40,16 +40,34 @@ namespace physics {
 
             [[nodiscard]] std::size_t paddedSize() const noexcept { return posX.size(); }
 
+            [[nodiscard]] bool forcesStale() const noexcept { return _forces_stale; }
+
+            void markForcesFresh() noexcept { this->_forces_stale = false; }
+
             void syncIn(const common::WorldState& world)
             {
-                const std::size_t count = std::min(world.positions.size(), world.mass.size());
+                const std::size_t count = std::min(
+                    {world.entities.size(), world.positions.size(), world.velocities.size(), world.mass.size()});
 
                 this->_resize(count);
+                this->_trackEntities(world.entities, count);
+
                 for (std::size_t i = 0; i < count; i += 1) {
                     posX[i] = world.positions[i].x;
                     posY[i] = world.positions[i].y;
                     posZ[i] = world.positions[i].z;
                     scalarMass[i] = scalarMassOf(world.mass[i]);
+                }
+            }
+
+            void syncOut(common::WorldState& world) const
+            {
+                const std::size_t count = std::min(this->_count, world.positions.size());
+
+                for (std::size_t i = 0; i < count; i += 1) {
+                    world.positions[i].x = posX[i];
+                    world.positions[i].y = posY[i];
+                    world.positions[i].z = posZ[i];
                 }
             }
 
@@ -71,6 +89,18 @@ namespace physics {
                 forceZ.assign(padded, 0.0);
             }
 
+            void _trackEntities(const std::vector<std::size_t>& entities, std::size_t count)
+            {
+                if (this->_entities.size() == count &&
+                    std::equal(this->_entities.begin(), this->_entities.end(), entities.begin()))
+                    return;
+
+                this->_entities.assign(entities.begin(), entities.begin() + static_cast<std::ptrdiff_t>(count));
+                this->_forces_stale = true;
+            }
+
             std::size_t _count = 0;
+            std::vector<std::size_t> _entities;
+            bool _forces_stale = true;
     };
 } // namespace physics

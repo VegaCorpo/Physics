@@ -12,7 +12,7 @@ namespace physics::forces {
 
     class Gravity {
         public:
-            static void apply(const common::WorldState& world, NewtonianState& state, double dt);
+            static void apply(NewtonianState& state, double dt);
 
             static components::ScalarMass computeScalarMass(const common::components::Mass& mass);
 
