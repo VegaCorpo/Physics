@@ -15,6 +15,11 @@ void physics::NewtonianPhysics::update(double dt)
 {
     this->_newtonian_state.syncIn(this->_world_state);
 
+    if (this->_newtonian_state.forcesStale()) {
+        forces::Gravity::apply(this->_newtonian_state, dt);
+        this->_newtonian_state.markForcesFresh();
+    }
+
     integration::Verlet::preIntegrate(this->_world_state, this->_newtonian_state, dt);
     forces::Gravity::apply(this->_newtonian_state, dt);
     integration::Verlet::postIntegrate(this->_world_state, this->_newtonian_state, dt);
