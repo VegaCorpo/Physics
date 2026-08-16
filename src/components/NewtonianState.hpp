@@ -42,7 +42,8 @@ namespace physics {
 
             void syncIn(const common::WorldState& world)
             {
-                const std::size_t count = std::min(world.positions.size(), world.mass.size());
+                const std::size_t count = std::min(
+                    {world.entities.size(), world.positions.size(), world.velocities.size(), world.mass.size()});
 
                 this->_resize(count);
                 for (std::size_t i = 0; i < count; i += 1) {
@@ -50,6 +51,17 @@ namespace physics {
                     posY[i] = world.positions[i].y;
                     posZ[i] = world.positions[i].z;
                     scalarMass[i] = scalarMassOf(world.mass[i]);
+                }
+            }
+
+            void syncOut(common::WorldState& world) const
+            {
+                const std::size_t count = std::min(this->_count, world.positions.size());
+
+                for (std::size_t i = 0; i < count; i += 1) {
+                    world.positions[i].x = posX[i];
+                    world.positions[i].y = posY[i];
+                    world.positions[i].z = posZ[i];
                 }
             }
 
