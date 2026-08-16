@@ -1,12 +1,12 @@
 #pragma once
 
-#include <entt/entt.hpp>
+#include <types/World.hpp>
 
 namespace physics::integration {
     class Verlet {
         public:
-            static void preIntegrate(entt::registry& registry, double dt);
-            static void postIntegrate(entt::registry& registry, double dt);
+            static void preIntegrate(common::WorldState& world, double dt);
+            static void postIntegrate(common::WorldState& world, double dt);
 
         private:
     };

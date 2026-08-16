@@ -1,13 +1,8 @@
 #pragma once
 
-#include <boost/align/aligned_allocator.hpp>
-#include <entt/entt.hpp>
-#include <entt/signal/fwd.hpp>
-#include <experimental/simd>
-#include "components/GravityCache.hpp"
-#include "components/kinematics/Position.hpp"
-#include "components/properties/Mass.hpp"
-#include "components/solver/ForceAccumulator.hpp"
+#include <types/World.hpp>
+#include "components/gravity_cache/GravityCache.hpp"
+#include "components/NewtonianState.hpp"
 
 namespace physics::forces {
 
@@ -17,21 +12,14 @@ namespace physics::forces {
 
     class Gravity {
         public:
-            /**
-             * @brief Apply gravitational forces between all pairs of entities with Position and Mass components.
-             *
-             * @param registry The entity registry containing the physics components.
-             * @param dt The time step to advance the simulation.
-             */
-            static void apply(entt::registry& registry, entt::dispatcher& dispatcher, double dt);
+            static void apply(const common::WorldState& world, NewtonianState& state, double dt);
 
-            static components::ScalarMass computeScalarMass(const components::Mass& mass);
+            static components::ScalarMass computeScalarMass(const common::components::Mass& mass);
 
         private:
-            static void _computeGravity(entt::registry& registry, size_t count);
+            static void _computeGravity(NewtonianState& state);
+            static inline void _accumulate();
 
             static components::InverseDistance computeInverseDistance(const components::Displacement& disp);
-
-            static double inverseDistance(double distance);
-    }; // namespace Gravity
+    };
 } // namespace physics::forces
