@@ -1,5 +1,6 @@
 #include "Octree.hpp"
 #include "components/NewtonianState.hpp"
+#include "utils/utils.hpp"
 
 void physics::Octree::build(const physics::NewtonianState& state)
 {
@@ -27,6 +28,19 @@ void physics::Octree::build(const physics::NewtonianState& state)
         bounds.posMax.Y = std::max(bounds.posMax.Y, state.posY[index]);
         bounds.posMax.Z = std::max(bounds.posMax.Z, state.posZ[index]);
     }
+
+    first_node.centerX = (bounds.posMin.X + bounds.posMax.X) * 0.5;
+    first_node.centerY = (bounds.posMin.Y + bounds.posMax.Y) * 0.5;
+    first_node.centerZ = (bounds.posMin.Z + bounds.posMax.Z) * 0.5;
+
+    auto extentX = bounds.posMax.X - bounds.posMin.X;
+    auto extentY = bounds.posMax.Y - bounds.posMin.Y;
+    auto extentZ = bounds.posMax.Z - bounds.posMin.Z;
+
+    first_node.halfSize = std::max(std::max(extentX, extentY), extentZ) * SAFETY_FACTOR;
+
+    if (first_node.halfSize == 0)
+        return;
 
     first_node.begin = 0;
     first_node.depth = 0;

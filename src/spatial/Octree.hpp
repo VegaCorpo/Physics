@@ -1,33 +1,12 @@
 #pragma once
 
-#include <components/acceleration.hpp>
-#include <components/mass.hpp>
-#include <components/position.hpp>
-#include <components/radius.hpp>
-#include <components/velocity.hpp>
 #include <cstdint>
-#include <limits>
 #include <vector>
 #include "components/NewtonianState.hpp"
 
 namespace physics {
 
-    struct Min {
-            double X = std::numeric_limits<double>::infinity();
-            double Y = std::numeric_limits<double>::infinity();
-            double Z = std::numeric_limits<double>::infinity();
-    }; // Size 24
-
-    struct Max {
-            double X = std::numeric_limits<double>::lowest();
-            double Y = std::numeric_limits<double>::lowest();
-            double Z = std::numeric_limits<double>::lowest();
-    }; // Size 24
-
-    struct Bounds {
-            Min posMin;
-            Max posMax;
-    }; // Size 48
+    constexpr double SAFETY_FACTOR = 1.001;
 
     struct Node {
             double centerX;
