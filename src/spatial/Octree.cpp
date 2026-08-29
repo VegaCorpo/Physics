@@ -3,6 +3,13 @@
 #include "components/NewtonianState.hpp"
 #include "utils/utils.hpp"
 
+namespace {
+    std::uint32_t getOctant(const physics::Node& node, double x, double y, double z)
+    {
+        return ((x >= node.centerX ? 1u : 0u) | (y >= node.centerY ? 1u : 0u) | (z >= node.centerZ ? 1u : 0u));
+    }
+} // namespace
+
 void physics::Octree::build(const physics::NewtonianState& state)
 {
     Bounds bounds;
