@@ -6,26 +6,60 @@
 namespace {
     std::uint32_t getOctant(const physics::Node& node, double x, double y, double z)
     {
-        return ((x >= node.centerX ? 1u : 0u) | (y >= node.centerY ? 1u : 0u) | (z >= node.centerZ ? 1u : 0u));
+        return ((x >= node.centerX ? 1u : 0u) | (y >= node.centerY ? 2u : 0u) | (z >= node.centerZ ? 4u : 0u));
     }
 } // namespace
 
 void physics::Octree::build(const physics::NewtonianState& state)
 {
-    Bounds bounds;
-    std::uint32_t nb_bodies;
-    Node first_node;
+    std::vector<std::uint32_t> pending;
 
     this->clear();
+
+    if (this->_initializeOctree(state) != OctreeState::OK)
+        return;
+
+    pending.push_back(0);
+    while (!pending.empty()) {
+        const std::uint32_t index = pending.back();
+        pending.pop_back();
+
+        if (this->_nodes[index].count <= LEAF_CAPACITY || this->_nodes[index].depth >= MAX_DEPTH) {
+            continue;
+        }
+        this->_subdivide(state, index);
+
+        const std::uint32_t first_child = this->_nodes[index].first_child;
+
+        for (std::uint32_t octant = 0; octant < LEAF_CAPACITY; octant += 1) {
+            if (this->_nodes[first_child + octant].count > 0) {
+                pending.push_back(first_child + octant);
+            }
+        }
+    }
+}
+
+physics::OctreeState physics::Octree::_initializeOctree(const NewtonianState& state)
+{
+    std::uint32_t nb_bodies;
 
     for (std::uint32_t i = 0; i < state.size(); i += 1) {
         this->_permutations.push_back(i);
     }
-    nb_bodies = this->_permutations.size();
 
+    nb_bodies = this->_permutations.size();
     if (nb_bodies == 0) {
-        return;
+        return OctreeState::OK;
     }
+    this->_buffer.resize(nb_bodies);
+    this->_initializeFirstNode(state, nb_bodies);
+    return OctreeState::NO_BODY;
+}
+
+void physics::Octree::_initializeFirstNode(const physics::NewtonianState& state, std::uint32_t nb_bodies)
+{
+    Node first_node;
+    Bounds bounds;
 
     for (auto index : this->_permutations) {
         bounds.posMin.X = std::min(bounds.posMin.X, state.posX[index]);
@@ -53,7 +87,6 @@ void physics::Octree::build(const physics::NewtonianState& state)
     first_node.begin = 0;
     first_node.depth = 0;
     first_node.count = nb_bodies;
-
     this->_nodes.push_back(first_node);
 }
 
@@ -64,4 +97,5 @@ void physics::Octree::clear()
 {
     this->_nodes.clear();
     this->_permutations.clear();
+    this->_buffer.clear();
 }

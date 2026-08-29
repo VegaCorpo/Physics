@@ -12,6 +12,11 @@ namespace physics {
     constexpr std::uint32_t INVALID_NODE = std::numeric_limits<std::uint32_t>::max();
     constexpr double SAFETY_FACTOR = 1.001;
 
+    enum class OctreeState {
+        OK,
+        NO_BODY,
+    };
+
     struct Node {
             double centerX = 0;
             double centerY = 0;
@@ -33,6 +38,8 @@ namespace physics {
             std::vector<std::uint32_t> _permutations;
             std::vector<std::uint32_t> _buffer;
 
+            OctreeState _initializeOctree(const physics::NewtonianState& state);
+            void _initializeFirstNode(const physics::NewtonianState& state, std::uint32_t nb_bodies);
             void _subdivide(const NewtonianState& state, std::uint32_t index);
     };
 } // namespace physics
