@@ -1,16 +1,17 @@
 #include "Octree.hpp"
+#include <cstdint>
 #include "components/NewtonianState.hpp"
 #include "utils/utils.hpp"
 
 void physics::Octree::build(const physics::NewtonianState& state)
 {
     Bounds bounds;
-    size_t nb_bodies;
+    std::uint32_t nb_bodies;
     Node first_node;
 
     this->clear();
 
-    for (size_t i = 0; i < state.size(); i += 1) {
+    for (std::uint32_t i = 0; i < state.size(); i += 1) {
         this->_permutations.push_back(i);
     }
     nb_bodies = this->_permutations.size();
@@ -37,15 +38,20 @@ void physics::Octree::build(const physics::NewtonianState& state)
     auto extentY = bounds.posMax.Y - bounds.posMin.Y;
     auto extentZ = bounds.posMax.Z - bounds.posMin.Z;
 
-    first_node.halfSize = std::max(std::max(extentX, extentY), extentZ) * SAFETY_FACTOR;
+    first_node.halfSize = std::max(std::max(extentX, extentY), extentZ) * 0.5 * SAFETY_FACTOR;
 
     if (first_node.halfSize == 0)
-        return;
+        first_node.halfSize += 1;
 
     first_node.begin = 0;
     first_node.depth = 0;
     first_node.count = nb_bodies;
+
+    this->_nodes.push_back(first_node);
 }
+
+void physics::Octree::_subdivide(const physics::NewtonianState& state, std::uint32_t index)
+{}
 
 void physics::Octree::clear()
 {
