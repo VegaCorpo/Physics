@@ -14,10 +14,15 @@ namespace {
 
 //? Public methods
 
-void physics::forces::Gravity::apply(NewtonianState& state, double /*dt*/)
+void physics::forces::Gravity::apply(NewtonianState& state, double /*dt*/, GravityMode mode)
 {
     if (state.size() == 0)
         return;
+
+    if (mode == GravityMode::BarnesHut) {
+        physics::forces::Gravity::_computeBarnesHutGravity(state);
+        return;
+    }
 
     physics::forces::Gravity::_computeGravity(state);
 }
@@ -79,6 +84,11 @@ void physics::forces::Gravity::_computeGravity(NewtonianState& state)
                       forceY[i] = stdx::reduce(accFy0 + accFy1);
                       forceZ[i] = stdx::reduce(accFz0 + accFz1);
                   });
+}
+
+void physics::forces::Gravity::_computeBarnesHutGravity(NewtonianState& state)
+{
+    //TODO: Implement Barnes-Hut algorithm for gravity computation
 }
 
 physics::components::ScalarMass physics::forces::Gravity::computeScalarMass(const common::components::Mass& mass)
