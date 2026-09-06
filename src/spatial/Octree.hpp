@@ -34,6 +34,12 @@ namespace physics {
             void build(const physics::NewtonianState& state);
             void clear();
 
+            [[nodiscard]] const std::vector<Node>& nodes() const noexcept { return this->_nodes; }
+            [[nodiscard]] const std::vector<std::uint32_t>& permutations() const noexcept
+            {
+                return this->_permutations;
+            }
+
         private:
             std::vector<Node> _nodes;
             std::vector<std::uint32_t> _permutations;
@@ -43,10 +49,10 @@ namespace physics {
             void _initializeFirstNode(const physics::NewtonianState& state, std::uint32_t nb_bodies);
             void _subdivide(const NewtonianState& state, std::uint32_t node_index);
             void _countBodiesPerOctant(const NewtonianState& state, const Node& parent,
-                std::uint32_t (&bodies_per_octant)[OCTANT_COUNT]);
+                                       std::uint32_t (&bodies_per_octant)[OCTANT_COUNT]);
             void _sortBodiesByOctant(const NewtonianState& state, const Node& parent,
-                const std::uint32_t (&octant_starts)[OCTANT_COUNT]);
+                                     const std::uint32_t (&octant_starts)[OCTANT_COUNT]);
             std::uint32_t _createChildren(const Node& parent, const std::uint32_t (&octant_starts)[OCTANT_COUNT],
-                const std::uint32_t (&bodies_per_octant)[OCTANT_COUNT]);
+                                          const std::uint32_t (&bodies_per_octant)[OCTANT_COUNT]);
     };
 } // namespace physics
