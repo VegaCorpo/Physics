@@ -5,7 +5,7 @@
 
 //? Public methods
 
-void physics::NewtonianPhysics::init(common::WorldState world)
+void physics::NewtonianPhysics::init(common::SpecificDataPhysics world)
 {
     this->_world_state = std::move(world);
     this->_newtonian_state.syncIn(this->_world_state);
@@ -34,12 +34,12 @@ void physics::NewtonianPhysics::shutdown()
 
 //? Private methods
 
-void physics::NewtonianPhysics::syncIn(common::WorldState world)
+void physics::NewtonianPhysics::syncIn(common::SpecificDataPhysics world)
 {
     this->_world_state = world;
 }
 
-common::WorldState physics::NewtonianPhysics::syncOut()
+common::SpecificDataPhysics physics::NewtonianPhysics::syncOut()
 {
     return this->_world_state;
 }
