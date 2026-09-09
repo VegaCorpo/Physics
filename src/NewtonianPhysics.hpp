@@ -2,6 +2,7 @@
 
 #include <interfaces/IPhysicsEngine.hpp>
 #include "components/NewtonianState.hpp"
+#include "spatial/Octree.hpp"
 
 namespace physics {
     class NewtonianPhysics : public common::IPhysicsEngine {
@@ -56,5 +57,7 @@ namespace physics {
         private:
             common::WorldState _world_state;
             NewtonianState _newtonian_state;
+
+            Octree _octree;
     };
 } // namespace physics
