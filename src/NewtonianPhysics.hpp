@@ -3,6 +3,7 @@
 #include <interfaces/IPhysicsEngine.hpp>
 #include "components/NewtonianState.hpp"
 #include "spatial/Octree.hpp"
+#include "types/World.hpp"
 
 namespace physics {
     class NewtonianPhysics : public common::IPhysicsEngine {
@@ -45,7 +46,7 @@ namespace physics {
              *
              * @param registry The entity registry to write to.
              */
-            common::SpecificDataPhysics syncOut() override;
+            common::WorldState publish() override;
 
             /**
              * @brief Get the name of the physics engine.
