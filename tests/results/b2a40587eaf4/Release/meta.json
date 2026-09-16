@@ -1,0 +1,22 @@
+{
+  "label": "b2a40587eaf4",
+  "commit": "b2a40587eaf453a3e58824f566ce8fce83a63a56",
+  "short": "b2a40587eaf4",
+  "subject": "refacto: physics build without entt (#24)",
+  "commit_date": "2026-08-16T13:23:58+02:00",
+  "dirty": false,
+  "build_type": "Release",
+  "repo": "/home/Valiance/Development/EIP/OrbitalEngine/Physics",
+  "source_dir": "/home/Valiance/Development/EIP/OrbitalEngine/Physics/tests/.work/b2a40587eaf4/src",
+  "lib": "/home/Valiance/Development/EIP/OrbitalEngine/Physics/tests/.work/b2a40587eaf4/build-Release/liborbital_physics.so",
+  "runner": "/home/Valiance/Development/EIP/OrbitalEngine/Physics/tests/.work/b2a40587eaf4/runner-Release/physics_qa_runner",
+  "compiler": "c++ (GCC) 16.2.1 20260810",
+  "host": "Valiance",
+  "os": "Linux 7.2.6-arch2-1",
+  "cpu": "AMD Ryzen 7 PRO 8840HS w/ Radeon 780M Graphics",
+  "governor": "powersave",
+  "python": "3.14.7",
+  "qa_version": "1.0.0",
+  "engine": null,
+  "saved_at": "2026-09-16T08:33:28+00:00"
+}
