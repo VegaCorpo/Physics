@@ -1,0 +1,4 @@
+#!/bin/sh
+# Entry point for the physics QA tool. Requires only Python 3 (stdlib).
+cd "$(dirname "$0")" || exit 1
+exec python3 -m qa "$@"

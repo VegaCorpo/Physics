@@ -1,0 +1,205 @@
+{
+  "_comment": "Every tolerance of the correctness suite. Relative errors are dimensionless: position errors are divided by the scene scale (semi-major axis for Kepler checks, RMS distance to the barycenter otherwise), velocity errors by the RMS speed, conserved quantities by their initial magnitude or, when that can be zero, by the sum of the per-body magnitudes.",
+  "dt": 7200.0,
+  "G": 6.6743e-20,
+  "reference": {
+    "substeps": 16,
+    "softening_km": 0.0
+  },
+  "checks": {
+    "kepler_circular": {
+      "enabled": true,
+      "category": "correctness",
+      "primary_mass": [
+        1.989,
+        30
+      ],
+      "secondary_mass": [
+        5.97,
+        24
+      ],
+      "semi_major_axis_km": 149597870.0,
+      "eccentricity": 0.0,
+      "orbits": 1.0,
+      "samples": 40,
+      "max_rel_position_error": 1e-05,
+      "max_rel_energy_drift": 1e-08,
+      "max_rel_angular_momentum_drift": 1e-10
+    },
+    "kepler_eccentric": {
+      "enabled": true,
+      "category": "correctness",
+      "primary_mass": [
+        1.989,
+        30
+      ],
+      "secondary_mass": [
+        5.97,
+        24
+      ],
+      "semi_major_axis_km": 149597870.0,
+      "eccentricity": 0.6,
+      "orbits": 1.0,
+      "samples": 40,
+      "max_rel_position_error": 0.001,
+      "max_rel_energy_drift": 0.0001,
+      "max_rel_angular_momentum_drift": 1e-10
+    },
+    "planetary_reference": {
+      "enabled": true,
+      "category": "correctness",
+      "planets": 11,
+      "seed": 7,
+      "frames": 2000,
+      "samples": 20,
+      "max_rel_position_error": 5e-05,
+      "max_rel_velocity_error": 0.005
+    },
+    "conservation": {
+      "enabled": true,
+      "category": "correctness",
+      "bodies": 200,
+      "seed": 11,
+      "frames": 2000,
+      "samples": 20,
+      "max_rel_energy_drift": 0.0001,
+      "max_rel_momentum_drift": 1e-09,
+      "max_rel_angular_momentum_drift": 1e-09,
+      "max_rel_barycenter_drift": 1e-09
+    },
+    "energy_bounded": {
+      "enabled": true,
+      "category": "integrator",
+      "primary_mass": [
+        1.989,
+        30
+      ],
+      "secondary_mass": [
+        5.97,
+        24
+      ],
+      "semi_major_axis_km": 149597870.0,
+      "eccentricity": 0.3,
+      "orbits": 10,
+      "samples_per_orbit": 20,
+      "max_growth_factor": 2.0
+    },
+    "reversibility": {
+      "enabled": true,
+      "category": "integrator",
+      "bodies": 50,
+      "seed": 3,
+      "frames": 400,
+      "max_rel_position_error": 1e-12,
+      "max_rel_velocity_error": 1e-12
+    },
+    "convergence_order": {
+      "enabled": true,
+      "category": "integrator",
+      "primary_mass": [
+        1.989,
+        30
+      ],
+      "secondary_mass": [
+        5.97,
+        24
+      ],
+      "semi_major_axis_km": 149597870.0,
+      "eccentricity": 0.3,
+      "duration_s": 15768000.0,
+      "dt_levels": [
+        57600.0,
+        28800.0,
+        14400.0,
+        7200.0
+      ],
+      "expected_order": 2.0,
+      "order_tolerance": 0.3
+    },
+    "determinism": {
+      "enabled": true,
+      "category": "robustness",
+      "bodies": 300,
+      "seed": 5,
+      "frames": 50
+    },
+    "permutation_invariance": {
+      "enabled": true,
+      "category": "robustness",
+      "bodies": 64,
+      "seed": 9,
+      "frames": 50,
+      "max_rel_error": 1e-12
+    },
+    "translation_invariance": {
+      "enabled": true,
+      "category": "robustness",
+      "bodies": 64,
+      "seed": 9,
+      "frames": 50,
+      "offset_km": [
+        1000000.0,
+        -2000000.0,
+        3000000.0
+      ],
+      "max_rel_error": 1e-09
+    },
+    "padding_sizes": {
+      "enabled": true,
+      "category": "robustness",
+      "sizes": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        7,
+        8,
+        9,
+        15,
+        16,
+        17,
+        31,
+        32,
+        33,
+        63,
+        64,
+        65
+      ],
+      "seed": 13,
+      "frames": 20,
+      "max_rel_position_error": 1e-07
+    },
+    "single_body_inertia": {
+      "enabled": true,
+      "category": "robustness",
+      "frames": 100,
+      "max_rel_error": 1e-12
+    },
+    "empty_world": {
+      "enabled": true,
+      "category": "robustness",
+      "frames": 10
+    },
+    "coincident_bodies": {
+      "enabled": true,
+      "category": "robustness",
+      "frames": 10
+    },
+    "massless_body_moves": {
+      "enabled": true,
+      "required": false,
+      "category": "robustness",
+      "frames": 100,
+      "max_rel_position_error": 0.0001
+    },
+    "large_scene_smoke": {
+      "enabled": true,
+      "category": "robustness",
+      "bodies": 10000,
+      "seed": 42,
+      "frames": 2
+    }
+  },
+  "_calibration": "Defaults were calibrated on Physics a54a3ef (Release, dt=7200 s): each limit is 3-10x the measured value so genuine regressions trip it while run-to-run noise does not. Measured: kepler_circular pos 4.5e-6 / energy 1e-12; kepler_eccentric(e=0.6) pos 2.8e-4 / energy 1.5e-5; planetary pos 7.8e-6 / vel 6.8e-4; conservation energy 1.1e-5, momentum 8e-16; reversibility 1e-16; padding 1.8e-9; convergence order 2.000."
+}
