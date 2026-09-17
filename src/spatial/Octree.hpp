@@ -12,6 +12,7 @@ namespace physics {
     constexpr uint8_t MAX_DEPTH = 20;
     constexpr std::uint32_t INVALID_NODE = std::numeric_limits<std::uint32_t>::max();
     constexpr double SAFETY_FACTOR = 1.001;
+    constexpr uint32_t FIRST_NODE = 0;
 
     enum class OctreeState {
         OK,
