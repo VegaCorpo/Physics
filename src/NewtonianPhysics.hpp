@@ -1,6 +1,7 @@
 #pragma once
 
 #include <interfaces/IPhysicsEngine.hpp>
+#include "collisions/collider.hpp"
 #include "components/NewtonianState.hpp"
 #include "spatial/Octree.hpp"
 
@@ -59,5 +60,6 @@ namespace physics {
             NewtonianState _newtonian_state;
 
             Octree _octree;
+            Collider _collider;
     };
 } // namespace physics

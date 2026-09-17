@@ -60,6 +60,7 @@ add_library(orbital_physics SHARED
     src/forces/Gravity.cpp
     src/integration/Verlet.cpp
     src/spatial/Octree.cpp
+    src/collisions/collider.cpp
 )
 
 target_link_libraries(orbital_physics PRIVATE

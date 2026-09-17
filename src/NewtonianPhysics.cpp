@@ -1,5 +1,6 @@
 #include "NewtonianPhysics.hpp"
 #include <utility>
+#include "components/NewtonianState.hpp"
 #include "forces/Gravity.hpp"
 #include "integration/Verlet.hpp"
 
@@ -26,6 +27,7 @@ void physics::NewtonianPhysics::update(double dt)
     forces::Gravity::apply(this->_newtonian_state, dt);
     integration::Verlet::postIntegrate(this->_world_state, this->_newtonian_state, dt);
 
+    this->_collider.check_collisions(this->_newtonian_state, this->_octree);
     this->_newtonian_state.syncOut(this->_world_state);
 }
 
