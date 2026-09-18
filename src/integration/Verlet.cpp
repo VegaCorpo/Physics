@@ -14,19 +14,10 @@ void physics::integration::Verlet::preIntegrate(common::WorldState& world, Newto
     auto& forceY = state.forceY;
     auto& forceZ = state.forceZ;
 
-    auto& mass = state.scalarMass;
-
     for (size_t i = 0; i < state.size(); i += 1) {
-        if (mass[i] == 0.0)
-            continue;
-
-        double ax = forceX[i] / mass[i];
-        double ay = forceY[i] / mass[i];
-        double az = forceZ[i] / mass[i];
-
-        vel[i].x += ax * halfDt;
-        vel[i].y += ay * halfDt;
-        vel[i].z += az * halfDt;
+        vel[i].x += forceX[i] * halfDt;
+        vel[i].y += forceY[i] * halfDt;
+        vel[i].z += forceZ[i] * halfDt;
 
         posX[i] += vel[i].x * dt;
         posY[i] += vel[i].y * dt;
@@ -46,18 +37,10 @@ void physics::integration::Verlet::postIntegrate(common::WorldState& world, Newt
     const auto& forceX = state.forceX;
     const auto& forceY = state.forceY;
     const auto& forceZ = state.forceZ;
-    const auto& mass = state.scalarMass;
 
     for (size_t i = 0; i < state.size(); i += 1) {
-        if (mass[i] == 0.0)
-            continue;
-
-        double ax = forceX[i] / mass[i];
-        double ay = forceY[i] / mass[i];
-        double az = forceZ[i] / mass[i];
-
-        vel[i].x += ax * halfDt;
-        vel[i].y += ay * halfDt;
-        vel[i].z += az * halfDt;
+        vel[i].x += forceX[i] * halfDt;
+        vel[i].y += forceY[i] * halfDt;
+        vel[i].z += forceZ[i] * halfDt;
     }
 }

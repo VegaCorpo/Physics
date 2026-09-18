@@ -35,6 +35,7 @@ namespace physics {
             aligned_vector<double> forceX;
             aligned_vector<double> forceY;
             aligned_vector<double> forceZ;
+            aligned_vector<double> radius;
 
             [[nodiscard]] std::size_t size() const noexcept { return _count; }
 
@@ -56,6 +57,7 @@ namespace physics {
                     posX[i] = world.positions[i].x;
                     posY[i] = world.positions[i].y;
                     posZ[i] = world.positions[i].z;
+                    radius[i] = world.radius[i].value;
                     scalarMass[i] = scalarMassOf(world.mass[i]);
                 }
             }
@@ -84,6 +86,7 @@ namespace physics {
                 posY.assign(padded, 0.0);
                 posZ.assign(padded, 0.0);
                 scalarMass.assign(padded, 0.0);
+                radius.assign(padded, 0.0);
                 forceX.assign(padded, 0.0);
                 forceY.assign(padded, 0.0);
                 forceZ.assign(padded, 0.0);
