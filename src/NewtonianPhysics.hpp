@@ -3,6 +3,7 @@
 #include <interfaces/IPhysicsEngine.hpp>
 #include "components/NewtonianState.hpp"
 #include "spatial/Octree.hpp"
+#include "forces/Gravity.hpp"
 
 namespace physics {
     class NewtonianPhysics : public common::IPhysicsEngine {
@@ -53,12 +54,13 @@ namespace physics {
              * @return The name of the physics engine.
              */
             [[nodiscard]] std::string getName() const override { return "NewtonianPhysics"; }
-            [[nodiscard]] GravityMode getGravityMode() const { return _gravity_mode; }
-            void setGravityMode(GravityMode mode) { _gravity_mode = mode; }
+            [[nodiscard]] forces::GravityMode getGravityMode() const { return _gravity_mode; }
+            void setGravityMode(forces::GravityMode mode) { _gravity_mode = mode; }
 
         private:
             common::WorldState _world_state;
             NewtonianState _newtonian_state;
+            forces::GravityMode _gravity_mode;
 
             Octree _octree;
     };

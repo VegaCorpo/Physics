@@ -9,6 +9,7 @@ void physics::NewtonianPhysics::init(common::WorldState world)
 {
     this->_world_state = std::move(world);
     this->_newtonian_state.syncIn(this->_world_state);
+    this->_gravity_mode = forces::GravityMode::BarnesHut;
 }
 
 void physics::NewtonianPhysics::update(double dt)
@@ -17,13 +18,13 @@ void physics::NewtonianPhysics::update(double dt)
 
     if (this->_newtonian_state.forcesStale()) {
         this->_octree.build(this->_newtonian_state);
-        forces::Gravity::apply(this->_newtonian_state, dt);
+        forces::Gravity::apply(this->_newtonian_state, dt, this->_gravity_mode, this->_octree);
         this->_newtonian_state.markForcesFresh();
     }
 
     integration::Verlet::preIntegrate(this->_world_state, this->_newtonian_state, dt);
     this->_octree.build(this->_newtonian_state);
-    forces::Gravity::apply(this->_newtonian_state, dt);
+    forces::Gravity::apply(this->_newtonian_state, dt, this->_gravity_mode, this->_octree);
     integration::Verlet::postIntegrate(this->_world_state, this->_newtonian_state, dt);
 
     this->_newtonian_state.syncOut(this->_world_state);
