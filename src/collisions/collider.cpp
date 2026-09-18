@@ -69,6 +69,5 @@ std::vector<std::pair<std::uint32_t, std::uint32_t>> physics::Collider::check_co
     if (octree.nodes().size() == 0)
         return {};
     this->_visit(octree, state, FIRST_NODE, collisions);
-    // std::cout << std::format("{} Collisions", collisions.size()) << std::endl;
     return collisions;
 }
