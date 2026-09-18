@@ -1,0 +1,22 @@
+{
+  "label": "6fbfca135b3d",
+  "commit": "6fbfca135b3d5af8198e4355b23e02a2ffe72eaf",
+  "short": "6fbfca135b3d",
+  "subject": "feat: implement integrator with new states  (#25)",
+  "commit_date": "2026-08-16T18:34:48+02:00",
+  "dirty": false,
+  "build_type": "Release",
+  "repo": "/home/Valiance/Development/EIP/OrbitalEngine/Physics",
+  "source_dir": "/home/Valiance/Development/EIP/OrbitalEngine/Physics/tests/.work/6fbfca135b3d/src",
+  "lib": "/home/Valiance/Development/EIP/OrbitalEngine/Physics/tests/.work/6fbfca135b3d/build-Release/liborbital_physics.so",
+  "runner": "/home/Valiance/Development/EIP/OrbitalEngine/Physics/tests/.work/6fbfca135b3d/runner-Release/physics_qa_runner",
+  "compiler": "c++ (GCC) 16.2.1 20260810",
+  "host": "Valiance",
+  "os": "Linux 7.2.6-arch2-1",
+  "cpu": "AMD Ryzen 7 PRO 8840HS w/ Radeon 780M Graphics",
+  "governor": "powersave",
+  "python": "3.14.7",
+  "qa_version": "1.0.0",
+  "engine": null,
+  "saved_at": "2026-09-16T08:33:32+00:00"
+}
