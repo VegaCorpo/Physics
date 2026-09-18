@@ -16,7 +16,7 @@ namespace {
         auto& xBodyB = state.posX[other_index];
         auto& yBodyB = state.posY[other_index];
         auto& zBodyB = state.posZ[other_index];
-        auto& rBodyB = state.posZ[other_index];
+        auto& rBodyB = state.radius[other_index];
 
         auto deltaX = xBodyA - xBodyB;
         auto deltaY = yBodyA - yBodyB;
