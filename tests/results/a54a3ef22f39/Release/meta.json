@@ -1,0 +1,22 @@
+{
+  "label": "a54a3ef22f39",
+  "commit": "a54a3ef22f39dcb5ee596e383415f390b1a2385a",
+  "short": "a54a3ef22f39",
+  "subject": "feat: implement octree for n-body computation (#27)",
+  "commit_date": "2026-09-07T12:02:43+02:00",
+  "dirty": false,
+  "build_type": "Release",
+  "repo": "/home/Valiance/Development/EIP/OrbitalEngine/Physics",
+  "source_dir": "/home/Valiance/Development/EIP/OrbitalEngine/Physics/tests/.work/a54a3ef22f39/src",
+  "lib": "/home/Valiance/Development/EIP/OrbitalEngine/Physics/tests/.work/a54a3ef22f39/build-Release/liborbital_physics.so",
+  "runner": "/home/Valiance/Development/EIP/OrbitalEngine/Physics/tests/.work/a54a3ef22f39/runner-Release/physics_qa_runner",
+  "compiler": "c++ (GCC) 16.2.1 20260810",
+  "host": "Valiance",
+  "os": "Linux 7.2.6-arch2-1",
+  "cpu": "AMD Ryzen 7 PRO 8840HS w/ Radeon 780M Graphics",
+  "governor": "powersave",
+  "python": "3.14.7",
+  "qa_version": "1.0.0",
+  "engine": null,
+  "saved_at": "2026-09-16T08:33:35+00:00"
+}

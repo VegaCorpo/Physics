@@ -1,0 +1,22 @@
+{
+  "_comment": "Benchmark plan. Each body count runs `repeats` fresh engines; every repeat does `warmup` untimed frames then `frames` timed ones. The primary statistic is the median update() time. Deltas are judged only when the median exceeds min_ms_for_verdict; smaller timings are dominated by scheduling noise.",
+  "dt": 7200.0,
+  "seed": 42,
+  "body_counts": [
+    10,
+    100,
+    1000,
+    10000,
+    50000
+  ],
+  "frames": 30,
+  "frames_override": {
+    "10000": 20,
+    "50000": 6
+  },
+  "warmup": 3,
+  "repeats": 3,
+  "regression_threshold_pct": 10.0,
+  "improvement_threshold_pct": 10.0,
+  "min_ms_for_verdict": 0.05
+}
