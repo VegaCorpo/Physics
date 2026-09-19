@@ -37,7 +37,7 @@ void physics::NewtonianPhysics::shutdown()
 
 void physics::NewtonianPhysics::syncIn(common::SpecificDataPhysics world)
 {
-    this->_world_state = world;
+    this->_world_state = std::move(world);
 }
 
 common::WorldState physics::NewtonianPhysics::publish()
