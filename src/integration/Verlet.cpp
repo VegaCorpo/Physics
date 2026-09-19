@@ -1,7 +1,7 @@
 #include "Verlet.hpp"
 #include "components/NewtonianState.hpp"
 
-void physics::integration::Verlet::preIntegrate(common::WorldState& world, NewtonianState& state, double dt)
+void physics::integration::Verlet::preIntegrate(common::SpecificDataPhysics& world, NewtonianState& state, double dt)
 {
     const double halfDt = 0.5 * dt;
 
@@ -38,7 +38,7 @@ void physics::integration::Verlet::preIntegrate(common::WorldState& world, Newto
     }
 }
 
-void physics::integration::Verlet::postIntegrate(common::WorldState& world, NewtonianState& state, double dt)
+void physics::integration::Verlet::postIntegrate(common::SpecificDataPhysics& world, NewtonianState& state, double dt)
 {
     const double halfDt = 0.5 * dt;
 
