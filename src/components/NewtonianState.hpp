@@ -19,9 +19,9 @@ namespace physics {
     template <typename T>
     using aligned_vector = std::vector<T, boost::alignment::aligned_allocator<T, SIMD_ALIGNMENT>>;
 
-    inline double scalarMassOf(const common::components::Mass& mass)
+    inline double scalarMassOf(const common::components::Mass& masses)
     {
-        return static_cast<double>(mass.mantissa) * std::pow(10.0, mass.exponent);
+        return static_cast<double>(masses.mantissa) * std::pow(10.0, masses.exponent);
     }
 
     struct NewtonianState {
@@ -44,23 +44,23 @@ namespace physics {
 
             void markForcesFresh() noexcept { this->_forces_stale = false; }
 
-            void syncIn(const common::WorldState& world)
+            void syncIn(const common::SpecificDataPhysics& world)
             {
                 const std::size_t count = std::min(
-                    {world.entities.size(), world.positions.size(), world.velocities.size(), world.mass.size()});
+                    {world.entitiesId.size(), world.positions.size(), world.velocities.size(), world.masses.size()});
 
                 this->_resize(count);
-                this->_trackEntities(world.entities, count);
+                this->_trackEntities(world.entitiesId, count);
 
                 for (std::size_t i = 0; i < count; i += 1) {
                     posX[i] = world.positions[i].x;
                     posY[i] = world.positions[i].y;
                     posZ[i] = world.positions[i].z;
-                    scalarMass[i] = scalarMassOf(world.mass[i]);
+                    scalarMass[i] = scalarMassOf(world.masses[i]);
                 }
             }
 
-            void syncOut(common::WorldState& world) const
+            void syncOut(common::SpecificDataPhysics& world) const
             {
                 const std::size_t count = std::min(this->_count, world.positions.size());
 

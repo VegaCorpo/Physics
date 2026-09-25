@@ -16,7 +16,7 @@ CPMDeclarePackage(EnTT
 
 # Common
 CPMDeclarePackage(Common
-        GIT_TAG v0.1.2
+        GIT_TAG v0.2.0
         GITHUB_REPOSITORY VegaCorpo/Common
         SYSTEM YES
         EXCLUDE_FROM_ALL YES
