@@ -4,6 +4,7 @@
 #include "components/NewtonianState.hpp"
 #include "spatial/Octree.hpp"
 #include "forces/Gravity.hpp"
+#include "types/World.hpp"
 
 namespace physics {
     class NewtonianPhysics : public common::IPhysicsEngine {
@@ -17,7 +18,7 @@ namespace physics {
             NewtonianPhysics() = default;
             ~NewtonianPhysics() override = default;
 
-            void init(common::WorldState world) override;
+            void init(common::SpecificDataPhysics world) override;
             /**
              * @brief Advance the physics simulation by one time step.
              *
@@ -39,14 +40,14 @@ namespace physics {
              *
              * @param registry The entity registry to read from.
              */
-            void syncIn(common::WorldState world) override;
+            void syncIn(common::SpecificDataPhysics world) override;
 
             /**
              * @brief Copy computed Physics components back into Core components after the simulation step.
              *
              * @param registry The entity registry to write to.
              */
-            common::WorldState syncOut() override;
+            common::WorldState publish() override;
 
             /**
              * @brief Get the name of the physics engine.
@@ -58,7 +59,7 @@ namespace physics {
             void setGravityMode(forces::GravityMode mode) { _gravity_mode = mode; }
 
         private:
-            common::WorldState _world_state;
+            common::SpecificDataPhysics _world_state;
             NewtonianState _newtonian_state;
             forces::GravityMode _gravity_mode;
 
