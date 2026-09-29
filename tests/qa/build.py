@@ -91,17 +91,21 @@ def _find_lib(build_dir: Path) -> Path:
     raise BuildError(f"no shared library found in {build_dir}")
 
 
-def prepare(repo: Path, ref: str | None, build_type: str, jobs: int, local_common: Path | None = None,
-            rebuild: bool = False) -> Build:
-    """Build the module at `ref` (or the working tree when ref is None) plus a matching runner.
+@dataclass
+class Checkout:
+    label: str
+    commit: str
+    short: str
+    subject: str
+    commit_date: str
+    dirty: bool
+    source: Path
 
-    Layout: .work/<label>/{src,build,runner}. The source checkout is a detached git
-    worktree so the user's checkout is never touched; the working tree itself is used
-    in place when ref is None (label suffixed with -dirty when it has changes).
-    """
+
+def checkout(repo: Path, ref: str | None, rebuild: bool = False) -> Checkout:
+    """Locate the sources to test: the working tree as is (ref None) or a detached
+    git worktree of `ref` under .work/<label>/src, created on demand."""
     repo = repo.resolve()
-    cache = cpm_cache(repo)
-
     if ref is None:
         commit, short, subject, date = describe_ref(repo, "HEAD")
         dirty = is_dirty(repo)
@@ -120,6 +124,23 @@ def prepare(repo: Path, ref: str | None, build_type: str, jobs: int, local_commo
             source.parent.mkdir(parents=True, exist_ok=True)
             _git(repo, "worktree", "prune")
             _git(repo, "worktree", "add", "--detach", str(source), commit)
+    return Checkout(label=label, commit=commit, short=short, subject=subject, commit_date=date, dirty=dirty,
+                    source=source)
+
+
+def prepare(repo: Path, ref: str | None, build_type: str, jobs: int, local_common: Path | None = None,
+            rebuild: bool = False) -> Build:
+    """Build the module at `ref` (or the working tree when ref is None) plus a matching runner.
+
+    Layout: .work/<label>/{src,build,runner}. The source checkout is a detached git
+    worktree so the user's checkout is never touched; the working tree itself is used
+    in place when ref is None (label suffixed with -dirty when it has changes).
+    """
+    repo = repo.resolve()
+    cache = cpm_cache(repo)
+    co = checkout(repo, ref, rebuild)
+    label, source = co.label, co.source
+    commit, short, subject, date, dirty = co.commit, co.short, co.subject, co.commit_date, co.dirty
 
     work = WORK_DIR / label
     work.mkdir(parents=True, exist_ok=True)
