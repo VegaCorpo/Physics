@@ -1,7 +1,7 @@
-#include "collider.hpp"
 #include <cmath>
 #include <cstdint>
-#include <iostream>
+
+#include "collisions/collider.hpp"
 #include "components/NewtonianState.hpp"
 #include "spatial/Octree.hpp"
 
@@ -38,6 +38,7 @@ void physics::Collider::_visit(const Octree& octree, const NewtonianState& state
                                std::vector<std::pair<uint32_t, uint32_t>>& out)
 {
     const Node& node = octree.nodes()[node_index];
+    constexpr short NODE_MINIMAL_NUMBER = 2;
 
     if (node.first_child != INVALID_NODE) {
         for (std::uint32_t octant = 0; octant < OCTANT_COUNT; octant += 1)
@@ -47,7 +48,7 @@ void physics::Collider::_visit(const Octree& octree, const NewtonianState& state
 
     const auto& permutation = octree.permutations();
 
-    if (node.count < 2) {
+    if (node.count < NODE_MINIMAL_NUMBER) {
         return;
     }
     for (std::uint32_t current = node.begin; current < node.begin + node.count; current += 1) {
