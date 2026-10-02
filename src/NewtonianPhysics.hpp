@@ -57,6 +57,7 @@ namespace physics {
             [[nodiscard]] std::string getName() const override { return "NewtonianPhysics"; }
 
         private:
+            void _publishOrientations(common::WorldState& world, std::size_t count) const;
             common::SpecificDataPhysics _worldState;
             NewtonianState _newtonianState;
 

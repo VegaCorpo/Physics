@@ -1,9 +1,11 @@
 #include "NewtonianPhysics.hpp"
+#include <algorithm>
 #include <utility>
 #include "components/NewtonianState.hpp"
 #include "forces/Gravity.hpp"
 #include "integration/Verlet.hpp"
 #include "types/World.hpp"
+#include "utils/rotation.hpp"
 
 //? Public methods
 
@@ -27,6 +29,7 @@ void physics::NewtonianPhysics::update(double dt)
     this->_octree.build(this->_newtonianState);
     forces::Gravity::apply(this->_newtonianState, dt);
     integration::Verlet::postIntegrate(this->_worldState, this->_newtonianState, dt);
+    common::rotation::advanceAll(this->_worldState.orientations, this->_worldState.angularVelocities, dt);
 
     this->_collider.checkCollisions(this->_newtonianState, this->_octree);
     this->_newtonianState.syncOut(this->_worldState);
@@ -59,5 +62,14 @@ common::WorldState physics::NewtonianPhysics::publish()
         world.accelerations[i] = this->_worldState.accelerations[i];
         world.velocities[i] = this->_worldState.velocities[i];
     }
+    this->_publishOrientations(world, count);
     return world;
+}
+
+void physics::NewtonianPhysics::_publishOrientations(common::WorldState& world, std::size_t count) const
+{
+    const auto& orientations = this->_worldState.orientations;
+
+    world.orientations.resize(count);
+    std::copy_n(orientations.begin(), std::min(count, orientations.size()), world.orientations.begin());
 }
