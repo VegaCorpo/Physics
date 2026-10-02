@@ -3,17 +3,43 @@
 #include <fstream>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <nlohmann/json.hpp>
 #include <types/World.hpp>
 
 namespace qa {
 
+    namespace detail {
+        /**
+         * Append the Radius component of one entity. Templated so that the
+         * `requires` check is a substitution failure, not a hard error, on a
+         * Common version whose WorldState has no radius column.
+         */
+        template <typename World>
+        void pushRadius(World& world, const nlohmann::json& components)
+        {
+            if constexpr (requires { world.radius; }) {
+                typename std::remove_cvref_t<decltype(world.radius)>::value_type radius{};
+                if (components.contains("Radius"))
+                    radius.value = components.at("Radius").at("value").get<float>();
+                world.radius.push_back(radius);
+            }
+        }
+    } // namespace detail
+
     /**
      * @brief Load a scene using the same JSON layout as the engine's scenes/ JSON files.
      *
      * Only the components the physics module consumes are read: Mass,
-     * Position, Velocity and (optionally) Acceleration. Entities get ids
-     * 0..N-1 in file order.
+     * Position, Velocity and (optionally) Acceleration and Radius. Entities
+     * get ids 0..N-1 in file order.
+     *
+     * Every per-entity vector of the WorldState is filled to the same length
+     * so the module can index any of them without bounds checks. The radius
+     * column only exists in Common >= v0.1.2 (collision support); it is
+     * filled when present so the runner still builds against older Common
+     * checkouts (`--local-common`). A missing Radius component defaults to
+     * 0, i.e. a point mass that never collides.
      */
     inline common::WorldState loadScene(const std::string& path)
     {
@@ -53,6 +79,7 @@ namespace qa {
             world.velocities.push_back(v);
             world.accelerations.push_back(a);
             world.mass.push_back(m);
+            detail::pushRadius(world, c);
         }
         return world;
     }

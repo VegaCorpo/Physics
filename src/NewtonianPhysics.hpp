@@ -1,6 +1,7 @@
 #pragma once
 
 #include <interfaces/IPhysicsEngine.hpp>
+#include "collisions/collider.hpp"
 #include "components/NewtonianState.hpp"
 #include "spatial/Octree.hpp"
 #include "types/World.hpp"
@@ -56,9 +57,10 @@ namespace physics {
             [[nodiscard]] std::string getName() const override { return "NewtonianPhysics"; }
 
         private:
-            common::SpecificDataPhysics _world_state;
-            NewtonianState _newtonian_state;
+            common::SpecificDataPhysics _worldState;
+            NewtonianState _newtonianState;
 
             Octree _octree;
+            Collider _collider;
     };
 } // namespace physics
