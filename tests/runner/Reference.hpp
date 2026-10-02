@@ -3,7 +3,6 @@
 #include <cmath>
 #include <cstddef>
 #include <vector>
-#include <types/World.hpp>
 #include "Invariants.hpp"
 
 namespace qa {
@@ -18,7 +17,7 @@ namespace qa {
      */
     class Reference {
         public:
-            Reference(const common::WorldState& world, long double G, long double softening2)
+            Reference(const State& world, long double G, long double softening2)
                 : _G(G), _eps2(softening2)
             {
                 const std::size_t n = world.positions.size();
@@ -36,7 +35,7 @@ namespace qa {
                     this->_vx[i] = world.velocities[i].x;
                     this->_vy[i] = world.velocities[i].y;
                     this->_vz[i] = world.velocities[i].z;
-                    this->_m[i] = scalarMass(world.mass[i]);
+                    this->_m[i] = scalarMass(massesOf(world)[i]);
                 }
                 this->_ax.resize(n);
                 this->_ay.resize(n);
@@ -51,8 +50,8 @@ namespace qa {
                     this->_rk4(h);
             }
 
-            /// Write the current state back into a WorldState (positions and velocities).
-            void writeTo(common::WorldState& world) const
+            /// Write the current state back into a state (positions and velocities).
+            void writeTo(State& world) const
             {
                 for (std::size_t i = 0; i < this->_x.size(); i += 1) {
                     world.positions[i].x = static_cast<double>(this->_x[i]);

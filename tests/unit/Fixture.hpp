@@ -34,16 +34,18 @@ namespace unit {
     using Pair = std::pair<std::uint32_t, std::uint32_t>;
     using PairSet = std::set<Pair>;
 
-    inline common::WorldState worldOf(const std::vector<Body>& bodies)
+    inline common::SpecificDataPhysics worldOf(const std::vector<Body>& bodies)
     {
-        common::WorldState world;
+        common::SpecificDataPhysics world;
         for (std::size_t i = 0; i < bodies.size(); i += 1) {
-            world.entities.push_back(i);
+            world.entitiesId.push_back(i);
             world.positions.push_back({bodies[i].x, bodies[i].y, bodies[i].z});
             world.velocities.push_back({0.0, 0.0, 0.0});
             world.accelerations.push_back({0.0, 0.0, 0.0});
-            world.mass.push_back({1.0f, 24});
+            world.masses.push_back({1.0f, 24});
             world.radius.push_back({static_cast<float>(bodies[i].radius)});
+            world.orientations.push_back({});
+            world.angularVelocities.push_back({});
         }
         return world;
     }
@@ -97,7 +99,7 @@ namespace unit {
 
         octree.build(mutableState);
         Detection d;
-        d.raw = collider.check_collisions(mutableState, octree);
+        d.raw = collider.checkCollisions(mutableState, octree);
         for (const auto& [a, b] : d.raw) {
             if (a == b)
                 d.selfPairs += 1;
@@ -133,7 +135,7 @@ namespace unit {
         const auto& nodes = octree.nodes();
         const auto& perm = octree.permutations();
         for (std::uint32_t n = 0; n < nodes.size(); n += 1) {
-            if (nodes[n].first_child != physics::INVALID_NODE)
+            if (nodes[n].firstChild != physics::INVALID_NODE)
                 continue;
             for (std::uint32_t slot = nodes[n].begin; slot < nodes[n].begin + nodes[n].count; slot += 1)
                 if (perm[slot] == body)

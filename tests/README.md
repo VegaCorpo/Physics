@@ -3,7 +3,7 @@
 Black-box test, accuracy and benchmark tooling for the physics module. It never
 links the module: a small C++ runner `dlopen()`s the built `liborbital_physics.so`
 and drives it through `common::IPhysicsEngine` exactly like Core does
-(`syncIn`, `update(dt)`, `syncOut` each frame). Any commit since the interface
+(`syncIn`, `update(dt)`, `publish` each frame). Any commit since the interface
 stabilised (b2a4058 onward) and any other module implementing the interface can
 therefore be measured and compared.
 
@@ -79,7 +79,7 @@ error is orders of magnitude below the module's double precision Verlet error.
 `common::IPhysicsEngine` does not expose the collision pairs, so the black-box
 runner cannot check them. `tests/unit/` is a separate GoogleTest project that
 compiles the module's `Octree.cpp` and `collider.cpp` directly and compares
-`Collider::check_collisions()` with an O(n²) brute force applying the same rule
+`Collider::checkCollisions()` with an O(n²) brute force applying the same rule
 (center distance ≤ r₁ + r₂). `./physics-qa unit` configures it under
 `.work/<label>/unit-<BuildType>/`, builds it and runs it; it exits non-zero when a
 test fails. GTest comes from the system when installed, otherwise CPM fetches it
