@@ -25,16 +25,16 @@ namespace {
         const auto& nodes = octree.nodes();
         const physics::Node& node = nodes[index];
 
-        if (node.first_child != physics::INVALID_NODE) {
+        if (node.firstChild != physics::INVALID_NODE) {
             std::uint32_t next = node.begin;
             std::uint32_t total = 0;
             for (std::uint32_t o = 0; o < physics::OCTANT_COUNT; o += 1) {
-                const physics::Node& child = nodes[node.first_child + o];
+                const physics::Node& child = nodes[node.firstChild + o];
                 if (child.begin != next)
                     w.badChildRanges += 1;
                 next = child.begin + child.count;
                 total += child.count;
-                walk(octree, state, node.first_child + o, w);
+                walk(octree, state, node.firstChild + o, w);
             }
             if (total != node.count)
                 w.badChildRanges += 1;
@@ -91,7 +91,7 @@ TEST(Octree, SmallSceneIsASingleLeaf)
     octree.build(state);
     ASSERT_EQ(octree.nodes().size(), 1u);
     EXPECT_EQ(octree.nodes()[0].count, physics::LEAF_CAPACITY);
-    EXPECT_EQ(octree.nodes()[0].first_child, physics::INVALID_NODE);
+    EXPECT_EQ(octree.nodes()[0].firstChild, physics::INVALID_NODE);
 }
 
 TEST(Octree, LeavesPartitionTheBodiesAndContainThem)

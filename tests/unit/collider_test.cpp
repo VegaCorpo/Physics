@@ -1,7 +1,7 @@
 /**
  * White-box tests of physics::Collider.
  *
- * Every test builds a NewtonianState, an Octree, runs check_collisions() and
+ * Every test builds a NewtonianState, an Octree, runs checkCollisions() and
  * compares the pairs with an O(n^2) brute force using the same contact rule
  * (center distance <= r1 + r2). Scenes are chosen so that the expected number
  * of contacts is known and non-trivial: the benchmark scenes of the engine
@@ -359,12 +359,12 @@ TEST(Collider, ReusingTheSameColliderAndOctreeAcrossFramesGivesFreshResults)
 
     physics::NewtonianState touching = unit::stateOf({{0.0, 0.0, 0.0, 1000.0}, {1500.0, 0.0, 0.0, 1000.0}});
     octree.build(touching);
-    EXPECT_EQ(collider.check_collisions(touching, octree).size(), 1u);
+    EXPECT_EQ(collider.checkCollisions(touching, octree).size(), 1u);
 
     physics::NewtonianState apart = unit::stateOf({{0.0, 0.0, 0.0, 1000.0}, {1.0e6, 0.0, 0.0, 1000.0}});
     octree.build(apart);
-    EXPECT_EQ(collider.check_collisions(apart, octree).size(), 0u);
+    EXPECT_EQ(collider.checkCollisions(apart, octree).size(), 0u);
 
     octree.build(touching);
-    EXPECT_EQ(collider.check_collisions(touching, octree).size(), 1u);
+    EXPECT_EQ(collider.checkCollisions(touching, octree).size(), 1u);
 }

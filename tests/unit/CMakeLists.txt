@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.14)
 # Unlike ../CMakeLists.txt (the black-box runner), this project compiles the
 # module's Octree and Collider sources directly: common::IPhysicsEngine does not
 # expose the collision pairs, so the only way to verify them is to call
-# physics::Collider::check_collisions() and compare its output with an O(n^2)
+# physics::Collider::checkCollisions() and compare its output with an O(n^2)
 # brute-force reference.
 #
 # PHYSICS_SOURCE_DIR points at the checkout of the module under test. Its
