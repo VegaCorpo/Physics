@@ -6,25 +6,25 @@
 #include "spatial/Octree.hpp"
 
 namespace {
-    bool check_overlap(const physics::NewtonianState& state, uint32_t body_index, uint32_t other_index)
+    bool checkOverlap(const physics::NewtonianState& state, uint32_t bodyIndex, uint32_t otherIndex)
     {
-        auto& xBodyA = state.posX[body_index];
-        auto& yBodyA = state.posY[body_index];
-        auto& zBodyA = state.posZ[body_index];
-        auto& rBodyA = state.radius[body_index];
+        auto& xBodyA = state.posX[bodyIndex];
+        auto& yBodyA = state.posY[bodyIndex];
+        auto& zBodyA = state.posZ[bodyIndex];
+        auto& rBodyA = state.radius[bodyIndex];
 
-        auto& xBodyB = state.posX[other_index];
-        auto& yBodyB = state.posY[other_index];
-        auto& zBodyB = state.posZ[other_index];
-        auto& rBodyB = state.radius[other_index];
+        auto& xBodyB = state.posX[otherIndex];
+        auto& yBodyB = state.posY[otherIndex];
+        auto& zBodyB = state.posZ[otherIndex];
+        auto& rBodyB = state.radius[otherIndex];
 
         auto deltaX = xBodyA - xBodyB;
         auto deltaY = yBodyA - yBodyB;
         auto deltaZ = zBodyA - zBodyB;
 
-        auto squared_dist = std::pow(deltaX, 2) + std::pow(deltaY, 2) + std::pow(deltaZ, 2);
+        auto squaredDist = std::pow(deltaX, 2) + std::pow(deltaY, 2) + std::pow(deltaZ, 2);
 
-        auto dist = std::sqrt(squared_dist);
+        auto dist = std::sqrt(squaredDist);
 
         auto contactDist = rBodyA + rBodyB;
         if (dist <= contactDist) {
@@ -34,15 +34,15 @@ namespace {
     }
 } // namespace
 
-void physics::Collider::_visit(const Octree& octree, const NewtonianState& state, std::uint32_t node_index,
+void physics::Collider::_visit(const Octree& octree, const NewtonianState& state, std::uint32_t nodeIndex,
                                std::vector<std::pair<uint32_t, uint32_t>>& out)
 {
-    const Node& node = octree.nodes()[node_index];
+    const Node& node = octree.nodes()[nodeIndex];
     constexpr short NODE_MINIMAL_NUMBER = 2;
 
-    if (node.first_child != INVALID_NODE) {
+    if (node.firstChild != INVALID_NODE) {
         for (std::uint32_t octant = 0; octant < OCTANT_COUNT; octant += 1)
-            this->_visit(octree, state, node.first_child + octant, out);
+            this->_visit(octree, state, node.firstChild + octant, out);
         return;
     }
 
@@ -55,14 +55,14 @@ void physics::Collider::_visit(const Octree& octree, const NewtonianState& state
         for (std::uint32_t b = current + 1; b < node.begin + node.count; b += 1) {
             const uint32_t i = permutation[current];
             const uint32_t j = permutation[b];
-            if (check_overlap(state, i, j))
+            if (checkOverlap(state, i, j))
                 out.emplace_back(i, j);
         }
     }
 }
 
-std::vector<std::pair<std::uint32_t, std::uint32_t>> physics::Collider::check_collisions(physics::NewtonianState& state,
-                                                                                         Octree& octree)
+std::vector<std::pair<std::uint32_t, std::uint32_t>> physics::Collider::checkCollisions(physics::NewtonianState& state,
+                                                                                        Octree& octree)
 {
     std::vector<std::pair<uint32_t, uint32_t>> collisions;
     collisions.reserve(octree.nodes().size() + 1);

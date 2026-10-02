@@ -8,8 +8,7 @@ namespace physics {
 
     class Collider {
         public:
-            std::vector<std::pair<std::uint32_t, std::uint32_t>> check_collisions(NewtonianState& state,
-                                                                                  Octree& octree);
+            std::vector<std::pair<std::uint32_t, std::uint32_t>> checkCollisions(NewtonianState& state, Octree& octree);
 
         private:
             void _visit(const Octree& octree, const NewtonianState& state, std::uint32_t node_index,
