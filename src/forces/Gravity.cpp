@@ -14,7 +14,7 @@ namespace {
 
 //? Public methods
 
-void physics::forces::Gravity::apply(NewtonianState& state, double /*dt*/)
+void physics::forces::Gravity::apply(NewtonianState& state, [[maybe_unused]] double dt)
 {
     if (state.size() == 0)
         return;
@@ -38,6 +38,8 @@ void physics::forces::Gravity::_computeGravity(NewtonianState& state)
     double* __restrict forceY = state.forceY.data();
     double* __restrict forceZ = state.forceZ.data();
 
+    const double epsilonSquared = state.epsilon * state.epsilon;
+
     std::for_each(std::execution::par_unseq, boost::counting_iterator<std::size_t>(0),
                   boost::counting_iterator<std::size_t>(count),
                   [=](std::size_t i)
@@ -60,7 +62,7 @@ void physics::forces::Gravity::_computeGravity(NewtonianState& state)
                           const simd_t dz = simd_t(&posZ[j], stdx::vector_aligned) - myPz;
                           const simd_t massJ(&mass[j], stdx::vector_aligned);
 
-                          const simd_t r2 = dx * dx + dy * dy + dz * dz + EPSILON2;
+                          const simd_t r2 = dx * dx + dy * dy + dz * dz + epsilonSquared;
                           const simd_t invDist = 1.0 / stdx::sqrt(r2);
                           const simd_t mag = massJ * invDist * invDist * invDist;
 
@@ -86,9 +88,10 @@ physics::components::ScalarMass physics::forces::Gravity::computeScalarMass(cons
 }
 
 physics::components::InverseDistance
-physics::forces::Gravity::computeInverseDistance(const physics::components::Displacement& disp)
+physics::forces::Gravity::computeInverseDistance(const physics::components::Displacement& disp, double epsilon)
 {
-    double r2 = disp.dx * disp.dx + disp.dy * disp.dy + disp.dz * disp.dz + EPSILON2;
+    double epsilonSquared = epsilon * epsilon;
+    double r2 = disp.dx * disp.dx + disp.dy * disp.dy + disp.dz * disp.dz + epsilonSquared;
     double invDist = 1.0 / std::sqrt(r2);
 
     return {invDist * invDist * invDist};
