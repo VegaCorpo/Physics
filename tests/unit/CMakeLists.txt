@@ -1,12 +1,13 @@
 cmake_minimum_required(VERSION 3.14)
 
-# White-box unit tests for the collision module.
+# White-box unit tests for the collision module and the gravitational softening.
 #
 # Unlike ../CMakeLists.txt (the black-box runner), this project compiles the
-# module's Octree and Collider sources directly: common::IPhysicsEngine does not
-# expose the collision pairs, so the only way to verify them is to call
-# physics::Collider::checkCollisions() and compare its output with an O(n^2)
-# brute-force reference.
+# module's Octree, Collider and Gravity sources directly: common::IPhysicsEngine
+# does not expose the collision pairs nor the softening length, so the only way
+# to verify them is to call physics::Collider::checkCollisions() and
+# physics::forces::Gravity::apply() and compare their output with reference
+# computations.
 #
 # PHYSICS_SOURCE_DIR points at the checkout of the module under test. Its
 # package-lock.cmake decides which Common and Boost versions are used, exactly
@@ -36,6 +37,11 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/package-lock.cmake")
 
 CPMGetPackage("Common")
 CPMGetPackage("Boost")
+# Gravity runs its loop with std::execution::par_unseq, backed by TBB as in the module.
+# TBB_STRICT turns its own warnings into errors, which newer compilers trip over.
+set(TBB_STRICT OFF CACHE BOOL "" FORCE)
+set(TBB_TEST OFF CACHE BOOL "" FORCE)
+CPMGetPackage("TBB")
 CPMGetPackage("GTest")
 
 enable_testing()
@@ -43,8 +49,10 @@ enable_testing()
 add_executable(physics_unit_tests
     collider_test.cpp
     octree_test.cpp
+    epsilon_test.cpp
     ${PHYSICS_SOURCE_DIR}/src/spatial/Octree.cpp
     ${PHYSICS_SOURCE_DIR}/src/collisions/collider.cpp
+    ${PHYSICS_SOURCE_DIR}/src/forces/Gravity.cpp
 )
 
 target_compile_options(physics_unit_tests PRIVATE
@@ -59,6 +67,8 @@ target_include_directories(physics_unit_tests PRIVATE
 target_link_libraries(physics_unit_tests PRIVATE
     Common
     Boost::align
+    Boost::iterator
+    TBB::tbb
     GTest::gtest_main
 )
 

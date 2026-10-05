@@ -6,11 +6,12 @@
 #include <execution>
 #include <experimental/simd>
 #include <vector>
+#include "components/NewtonianState.hpp"
 #include "spatial/Octree.hpp"
 
 //? Public methods
 
-void physics::forces::Gravity::apply(NewtonianState& state, double /*dt*/, GravityMode mode, Octree& tree)
+void physics::forces::Gravity::apply(NewtonianState& state, [[maybe_unused]] double dt, GravityMode mode, Octree& tree)
 {
     if (state.size() == 0)
         return;
@@ -44,6 +45,8 @@ void physics::forces::Gravity::_computeGravity(NewtonianState& state)
     double* __restrict forceY = state.forceY.data();
     double* __restrict forceZ = state.forceZ.data();
 
+    const double epsilonSquared = state.epsilon * state.epsilon;
+
     std::for_each(std::execution::par_unseq, boost::counting_iterator<std::size_t>(0),
                   boost::counting_iterator<std::size_t>(count),
                   [=](std::size_t i)
@@ -66,7 +69,7 @@ void physics::forces::Gravity::_computeGravity(NewtonianState& state)
                           const simd_t dz = simd_t(&posZ[j], stdx::vector_aligned) - myPz;
                           const simd_t massJ(&mass[j], stdx::vector_aligned);
 
-                          const simd_t r2 = dx * dx + dy * dy + dz * dz + EPSILON2;
+                          const simd_t r2 = dx * dx + dy * dy + dz * dz + epsilonSquared;
                           const simd_t invDist = 1.0 / stdx::sqrt(r2);
                           const simd_t mag = massJ * invDist * invDist * invDist;
 
@@ -149,7 +152,7 @@ auto physics::forces::Gravity::_bodyPoint(const NewtonianState& state, std::uint
 auto physics::forces::Gravity::_gravityFrom(const PointMass& source, const PointMass& target) -> Vec3
 {
     const Vec3 delta = source.pos - target.pos;
-    const double invDistance = 1.0 / std::sqrt(delta.norm2() + EPSILON2);
+    const double invDistance = 1.0 / std::sqrt(delta.norm2() + physics::NewtonianState::DEFAULT_EPSILON * physics::NewtonianState::DEFAULT_EPSILON);
     const double mag = G * target.mass * source.mass * invDistance * invDistance * invDistance;
 
     return delta * mag;
@@ -205,7 +208,7 @@ auto physics::forces::Gravity::_leafForce(const physics::Node& node, const Newto
 
 bool physics::forces::Gravity::_canApproximate(const physics::Node& node, const Vec3& center, const Vec3& target)
 {
-    const double distance2 = (center - target).norm2() + EPSILON2;
+    const double distance2 = (center - target).norm2() + physics::NewtonianState::DEFAULT_EPSILON * physics::NewtonianState::DEFAULT_EPSILON;
     const double size = node.halfSize * 2.0;
 
     return size * size < BARNES_HUT_THETA2 * distance2;
@@ -233,9 +236,10 @@ bool physics::forces::Gravity::_containsSlot(const physics::Node& node, std::uin
 }
 
 physics::components::InverseDistance
-physics::forces::Gravity::computeInverseDistance(const physics::components::Displacement& disp)
+physics::forces::Gravity::computeInverseDistance(const physics::components::Displacement& disp, double epsilon)
 {
-    double r2 = disp.dx * disp.dx + disp.dy * disp.dy + disp.dz * disp.dz + EPSILON2;
+    double epsilonSquared = epsilon * epsilon;
+    double r2 = disp.dx * disp.dx + disp.dy * disp.dy + disp.dz * disp.dz + epsilonSquared;
     double invDist = 1.0 / std::sqrt(r2);
 
     return {invDist * invDist * invDist};

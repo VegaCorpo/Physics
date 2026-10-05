@@ -47,10 +47,20 @@ def _meta(b: build.Build, extra: dict) -> dict:
     return {**b.to_dict(), **results.machine_meta(), "qa_version": __version__, **extra}
 
 
+def _unit_meta(co, exe, build_type: str, label: str, root: Path) -> dict:
+    """Commit and machine fields for a unit-only save; keys already stored by `run` are left untouched."""
+    existing = results.load_one(results.result_dir(label, build_type, root)).get("meta") or {}
+    defaults = {**unit.meta(co, exe, build_type), **results.machine_meta(), "qa_version": __version__, "label": label}
+    return {k: v for k, v in defaults.items() if k not in existing}
+
+
 def cmd_run(args) -> int:
     b = _prepare(args)
-    correctness = benchmark = None
+    correctness = benchmark = unit_results = None
     engine = None
+    if not args.no_unit:
+        _, exe = unit.build(args.repo, args.ref, args.build_type, args.jobs, args.local_common, args.rebuild)
+        _, unit_results = unit.run(exe)
     if not args.no_tests:
         thresholds = config.load_thresholds(args.thresholds)
         ctx = checks.Context(_runner(b, thresholds["G"], "tests"), WORK_DIR / b.label / "scenes", thresholds["dt"],
@@ -63,9 +73,12 @@ def cmd_run(args) -> int:
         runner = _runner(b, config.load_thresholds(args.thresholds)["G"], "bench")
         benchmark = bench.run(runner, plan, WORK_DIR / "scenes", args.bodies)
         engine = benchmark.get("engine")
-    target = results.save(b.label, b.build_type, _meta(b, {"engine": engine}), correctness, benchmark, args.results)
+    target = results.save(b.label, b.build_type, _meta(b, {"engine": engine}), correctness, benchmark, args.results,
+                          unit=unit_results)
     print(f"[saved] {target}")
     if correctness and (correctness["summary"]["fail"] or correctness["summary"]["error"]):
+        return 1
+    if unit_results and (unit_results["summary"]["fail"] or unit_results["summary"]["error"]):
         return 1
     return 0
 
@@ -92,6 +105,8 @@ def cmd_report(args) -> int:
                 return 2
         if cand.correctness and (cand.correctness["summary"]["fail"] or cand.correctness["summary"]["error"]):
             return 1
+        if cand.unit and (cand.unit["summary"]["fail"] or cand.unit["summary"]["error"]):
+            return 1
     return 0
 
 
@@ -100,9 +115,11 @@ def cmd_list(args) -> int:
         c = e.correctness["summary"] if e.correctness else None
         b = e.benchmark["results"] if e.benchmark else []
         summary = f"tests {c['pass']}P/{c['fail']}F/{c['warn']}W/{c['error']}E" if c else "no tests"
+        u = e.unit["summary"] if e.unit else None
+        summary += f" unit {u['pass']}/{u['total']}" if u else " no unit"
         biggest = max(b, key=lambda r: r["bodies"]) if b else None
         bench_s = f"{biggest['bodies']} bodies {biggest['update_ms']['median']:.3f} ms" if biggest else "no bench"
-        print(f"{e.label:24} {e.build_type:8} {e.commit_date:25} {summary:28} {bench_s}   {e.meta.get('subject', '')}")
+        print(f"{e.label:24} {e.build_type:8} {e.commit_date:25} {summary:42} {bench_s}   {e.meta.get('subject', '')}")
     return 0
 
 
@@ -113,8 +130,15 @@ def cmd_build(args) -> int:
 
 
 def cmd_unit(args) -> int:
-    _, exe = unit.build(args.repo, args.ref, args.build_type, args.jobs, args.local_common, args.rebuild)
-    return unit.run(exe, args.filter, args.verbose)
+    co, exe = unit.build(args.repo, args.ref, args.build_type, args.jobs, args.local_common, args.rebuild)
+    code, unit_results = unit.run(exe, args.filter, args.verbose)
+    if args.filter or args.no_save:
+        return code  # a filtered run would overwrite the full results with a subset
+    label = args.label or co.label
+    target = results.save(label, args.build_type, _unit_meta(co, exe, args.build_type, label, args.results), None, None,
+                          args.results, unit=unit_results)
+    print(f"[saved] {target / 'unit.json'}")
+    return code
 
 
 def cmd_overlaps(args) -> int:
@@ -148,6 +172,7 @@ def main(argv: list[str] | None = None) -> int:
     _add_build_args(p_run)
     p_run.add_argument("--no-tests", action="store_true")
     p_run.add_argument("--no-bench", action="store_true")
+    p_run.add_argument("--no-unit", action="store_true", help="skip the white-box unit tests (tests/unit)")
     p_run.add_argument("--only", nargs="*", help="run only these checks")
     p_run.add_argument("--bodies", nargs="*", type=int, help="benchmark only these body counts")
     p_run.add_argument("--thresholds", type=Path, default=None, help="JSON overriding config/thresholds.json")
@@ -158,6 +183,7 @@ def main(argv: list[str] | None = None) -> int:
     _add_build_args(p_test)
     p_test.add_argument("--only", nargs="*")
     p_test.add_argument("--thresholds", type=Path, default=None)
+    p_test.add_argument("--no-unit", action="store_true", help="skip the white-box unit tests (tests/unit)")
     p_test.set_defaults(func=cmd_run, no_bench=True, no_tests=False, benchmark=None, bodies=None)
 
     p_bench = sub.add_parser("bench", help="same as run --no-tests")
@@ -165,7 +191,7 @@ def main(argv: list[str] | None = None) -> int:
     p_bench.add_argument("--bodies", nargs="*", type=int)
     p_bench.add_argument("--benchmark", type=Path, default=None)
     p_bench.add_argument("--thresholds", type=Path, default=None)
-    p_bench.set_defaults(func=cmd_run, no_tests=True, no_bench=False, only=None)
+    p_bench.set_defaults(func=cmd_run, no_tests=True, no_bench=False, no_unit=True, only=None)
 
     p_build = sub.add_parser("build", help="only build the module and the runner")
     _add_build_args(p_build)
@@ -183,6 +209,9 @@ def main(argv: list[str] | None = None) -> int:
     p_unit.add_argument("--rebuild", action="store_true", help="wipe and rebuild the unit tests")
     p_unit.add_argument("--filter", default=None, help="GoogleTest filter, e.g. 'Collider.*'")
     p_unit.add_argument("--verbose", action="store_true", help="print every test, not only failures")
+    p_unit.add_argument("--label", default=None, help="results label override (default: short commit hash)")
+    p_unit.add_argument("--no-save", action="store_true",
+                        help="do not store unit.json (always skipped with --filter)")
     p_unit.set_defaults(func=cmd_unit)
 
     p_ov = sub.add_parser("overlaps", help="count the pairs of bodies in contact at t=0 in scene files")

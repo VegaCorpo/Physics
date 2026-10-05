@@ -184,8 +184,10 @@ def line_chart(series: list[dict], title: str, xlabel: str, ylabel: str, log_x: 
 
 def bar_chart(categories: list[str], series: list[dict], title: str, ylabel: str, width: int = 720,
               height: int = 320, threshold: float | None = None, threshold_label: str = "limit",
-              symmetric: bool = False) -> str:
-    """Grouped bars. series: [{"name", "values": [...], "slot"}], values aligned with categories."""
+              symmetric: bool = False, muted: list[bool] | None = None) -> str:
+    """Grouped bars. series: [{"name", "values": [...], "slot"}], values aligned with categories.
+
+    muted[i] greys out category i (e.g. a value too noisy to be judged) instead of its series colour."""
     left, right, top, bottom = 72, 24, 40, 56
     values = [v for s in series for v in s["values"] if v is not None and math.isfinite(v)]
     if not values:
@@ -227,8 +229,10 @@ def bar_chart(categories: list[str], series: list[dict], title: str, ylabel: str
             x = gx - total_w / 2 + si * (bar_w + 2)
             y0, y1 = sorted((sy(v), zero))
             h = max(1.0, y1 - y0)
-            out.append(f'<rect class="bar" x="{x:.1f}" y="{y0:.1f}" width="{bar_w:.1f}" height="{h:.1f}" rx="3" '
-                       f'fill="var(--series-{slot})"><title>{escape(s["name"])}\n{escape(str(cat))}: {fmt(v)}</title></rect>')
+            dim = bool(muted and ci < len(muted) and muted[ci])
+            out.append(f'<rect class="bar{" muted-bar" if dim else ""}" x="{x:.1f}" y="{y0:.1f}" width="{bar_w:.1f}" '
+                       f'height="{h:.1f}" rx="3" fill="var(--series-{slot})"><title>{escape(s["name"])}\n'
+                       f'{escape(str(cat))}: {fmt(v)}{" (not judged)" if dim else ""}</title></rect>')
     out.append("</svg>")
     if len(series) >= 2:
         out.append('<div class="legend">' + "".join(
