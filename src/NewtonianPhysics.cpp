@@ -13,6 +13,7 @@ void physics::NewtonianPhysics::init(common::SpecificDataPhysics world)
 {
     this->_worldState = std::move(world);
     this->_newtonianState.syncIn(this->_worldState);
+    this->_gravityMode = forces::GravityMode::BarnesHut;
 }
 
 void physics::NewtonianPhysics::update(double dt)
@@ -21,13 +22,13 @@ void physics::NewtonianPhysics::update(double dt)
 
     if (this->_newtonianState.forcesStale()) {
         this->_octree.build(this->_newtonianState);
-        forces::Gravity::apply(this->_newtonianState, dt);
+        forces::Gravity::apply(this->_newtonianState, dt, this->_gravityMode, this->_octree);
         this->_newtonianState.markForcesFresh();
     }
 
     integration::Verlet::preIntegrate(this->_worldState, this->_newtonianState, dt);
     this->_octree.build(this->_newtonianState);
-    forces::Gravity::apply(this->_newtonianState, dt);
+    forces::Gravity::apply(this->_newtonianState, dt, this->_gravityMode, this->_octree);
     integration::Verlet::postIntegrate(this->_worldState, this->_newtonianState, dt);
     common::rotation::advanceAll(this->_worldState.orientations, this->_worldState.angularVelocities, dt);
 

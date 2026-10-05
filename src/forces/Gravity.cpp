@@ -5,21 +5,28 @@
 #include <cstddef>
 #include <execution>
 #include <experimental/simd>
-
-namespace {
-    using simd_t = physics::stdx::native_simd<double>;
-
-    constexpr std::size_t LANES = physics::SIMD_WIDTH;
-} // namespace
+#include <vector>
+#include "components/NewtonianState.hpp"
+#include "spatial/Octree.hpp"
 
 //? Public methods
 
-void physics::forces::Gravity::apply(NewtonianState& state, [[maybe_unused]] double dt)
+void physics::forces::Gravity::apply(NewtonianState& state, [[maybe_unused]] double dt, GravityMode mode, Octree& tree)
 {
     if (state.size() == 0)
         return;
 
+    if (mode == GravityMode::BarnesHut) {
+        physics::forces::Gravity::_computeBarnesHutGravity(state, tree);
+        return;
+    }
+
     physics::forces::Gravity::_computeGravity(state);
+}
+
+physics::components::ScalarMass physics::forces::Gravity::computeScalarMass(const common::components::Mass& mass)
+{
+    return {physics::scalarMassOf(mass)};
 }
 
 //? Private methods
@@ -82,9 +89,150 @@ void physics::forces::Gravity::_computeGravity(NewtonianState& state)
                   });
 }
 
-physics::components::ScalarMass physics::forces::Gravity::computeScalarMass(const common::components::Mass& mass)
+void physics::forces::Gravity::_computeBarnesHutGravity(NewtonianState& state, Octree& tree)
 {
-    return {physics::scalarMassOf(mass)};
+    const std::vector<std::uint32_t> slots = _computeSlots(tree.permutations(), state.size());
+    const MassCenters centers = _computeMassCenters(state, tree);
+
+    std::for_each(std::execution::par, boost::counting_iterator<std::uint32_t>(0),
+                  boost::counting_iterator<std::uint32_t>(static_cast<std::uint32_t>(state.size())),
+                  [&](std::uint32_t body) { _computeBodyForce(state, tree, centers, slots, body); });
+}
+
+std::vector<std::uint32_t> physics::forces::Gravity::_computeSlots(const std::vector<std::uint32_t>& permutations,
+                                                                   std::size_t bodyCount)
+{
+    std::vector<std::uint32_t> slots(bodyCount);
+
+    for (std::uint32_t slot = 0; slot < permutations.size(); ++slot)
+        slots[permutations[slot]] = slot;
+    return slots;
+}
+
+auto physics::forces::Gravity::_computeMassCenters(const NewtonianState& state, const Octree& tree) -> MassCenters
+{
+    const auto& nodes = tree.nodes();
+    const auto& permutations = tree.permutations();
+    MassCenters centers(nodes.size());
+
+    for (std::size_t index = nodes.size(); index-- > 0;) {
+        const physics::Node& node = nodes[index];
+        const Moment moment = _isLeaf(node) ? _leafMoment(node, state, permutations) : _internalMoment(node, centers);
+
+        centers.set(index, moment);
+    }
+    return centers;
+}
+
+auto physics::forces::Gravity::_leafMoment(const physics::Node& node, const NewtonianState& state,
+                                           const std::vector<std::uint32_t>& permutations) -> Moment
+{
+    Moment moment;
+    const std::uint32_t end = node.begin + node.count;
+
+    for (std::uint32_t slot = node.begin; slot < end; ++slot)
+        moment += _bodyPoint(state, permutations[slot]);
+    return moment;
+}
+
+auto physics::forces::Gravity::_internalMoment(const physics::Node& node, const MassCenters& centers) -> Moment
+{
+    Moment moment;
+
+    for (std::uint32_t octant = 0; octant < physics::OCTANT_COUNT; ++octant)
+        moment += centers.at(node.firstChild + octant);
+    return moment;
+}
+
+auto physics::forces::Gravity::_bodyPoint(const NewtonianState& state, std::uint32_t body) -> PointMass
+{
+    return {state.scalarMass[body], {state.posX[body], state.posY[body], state.posZ[body]}};
+}
+
+auto physics::forces::Gravity::_gravityFrom(const PointMass& source, const PointMass& target) -> Vec3
+{
+    const Vec3 delta = source.pos - target.pos;
+    const double invDistance = 1.0 / std::sqrt(delta.norm2() + physics::NewtonianState::DEFAULT_EPSILON * physics::NewtonianState::DEFAULT_EPSILON);
+    const double mag = G * target.mass * source.mass * invDistance * invDistance * invDistance;
+
+    return delta * mag;
+}
+
+void physics::forces::Gravity::_computeBodyForce(NewtonianState& state, const Octree& tree, const MassCenters& centers,
+                                                 const std::vector<std::uint32_t>& slots, std::uint32_t body)
+{
+    const auto& nodes = tree.nodes();
+    const auto& permutations = tree.permutations();
+    const PointMass target = _bodyPoint(state, body);
+    Vec3 force;
+    NodeStack stack;
+
+    stack.push(0);
+    while (!stack.empty()) {
+        const std::uint32_t index = stack.pop();
+        const physics::Node& node = nodes[index];
+
+        if (_isLeaf(node)) {
+            force += _leafForce(node, state, permutations, body, target);
+            continue;
+        }
+
+        const PointMass center = centers.at(index);
+        if (!_containsSlot(node, slots[body]) && _canApproximate(node, center.pos, target.pos)) {
+            force += _gravityFrom(center, target);
+            continue;
+        }
+
+        _pushChildren(tree, node, stack);
+    }
+
+    state.forceX[body] = force.x;
+    state.forceY[body] = force.y;
+    state.forceZ[body] = force.z;
+}
+
+auto physics::forces::Gravity::_leafForce(const physics::Node& node, const NewtonianState& state,
+                                          const std::vector<std::uint32_t>& permutations, std::uint32_t body,
+                                          const PointMass& target) -> Vec3
+{
+    Vec3 force;
+    const std::uint32_t end = node.begin + node.count;
+
+    for (std::uint32_t slot = node.begin; slot < end; ++slot) {
+        const std::uint32_t source = permutations[slot];
+        if (source != body)
+            force += _gravityFrom(_bodyPoint(state, source), target);
+    }
+    return force;
+}
+
+bool physics::forces::Gravity::_canApproximate(const physics::Node& node, const Vec3& center, const Vec3& target)
+{
+    const double distance2 = (center - target).norm2() + physics::NewtonianState::DEFAULT_EPSILON * physics::NewtonianState::DEFAULT_EPSILON;
+    const double size = node.halfSize * 2.0;
+
+    return size * size < BARNES_HUT_THETA2 * distance2;
+}
+
+void physics::forces::Gravity::_pushChildren(const Octree& tree, const physics::Node& node, NodeStack& stack)
+{
+    const auto& nodes = tree.nodes();
+
+    for (std::uint32_t octant = 0; octant < physics::OCTANT_COUNT; ++octant) {
+        const std::uint32_t child = node.firstChild + octant;
+        if (nodes[child].count != 0)
+            stack.push(child);
+    }
+}
+
+bool physics::forces::Gravity::_isLeaf(const physics::Node& node)
+{
+    return node.firstChild == physics::INVALID_NODE;
+}
+
+bool physics::forces::Gravity::_containsSlot(const physics::Node& node, std::uint32_t slot)
+{
+    return slot >= node.begin && slot < node.begin + node.count;
 }
 
 physics::components::InverseDistance
