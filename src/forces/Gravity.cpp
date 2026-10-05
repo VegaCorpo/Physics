@@ -51,7 +51,6 @@ void physics::forces::Gravity::_computeGravity(NewtonianState& state)
                       const simd_t myPx = posX[i];
                       const simd_t myPy = posY[i];
                       const simd_t myPz = posZ[i];
-                      const simd_t myMassG = mass[i] * G;
 
                       simd_t accFx0 = 0.0;
                       simd_t accFy0 = 0.0;
@@ -69,7 +68,7 @@ void physics::forces::Gravity::_computeGravity(NewtonianState& state)
 
                           const simd_t r2 = dx * dx + dy * dy + dz * dz + EPSILON2;
                           const simd_t invDist = 1.0 / stdx::sqrt(r2);
-                          const simd_t mag = myMassG * massJ * invDist * invDist * invDist;
+                          const simd_t mag = massJ * invDist * invDist * invDist;
 
                           accFx += mag * dx;
                           accFy += mag * dy;
@@ -81,9 +80,9 @@ void physics::forces::Gravity::_computeGravity(NewtonianState& state)
                           accumulate(j + LANES, accFx1, accFy1, accFz1);
                       }
 
-                      forceX[i] = stdx::reduce(accFx0 + accFx1);
-                      forceY[i] = stdx::reduce(accFy0 + accFy1);
-                      forceZ[i] = stdx::reduce(accFz0 + accFz1);
+                      forceX[i] = G * stdx::reduce(accFx0 + accFx1);
+                      forceY[i] = G * stdx::reduce(accFy0 + accFy1);
+                      forceZ[i] = G * stdx::reduce(accFz0 + accFz1);
                   });
 }
 
@@ -138,7 +137,7 @@ auto physics::forces::Gravity::_internalMoment(const physics::Node& node, const 
     Moment moment;
 
     for (std::uint32_t octant = 0; octant < physics::OCTANT_COUNT; ++octant)
-        moment += centers.at(node.first_child + octant);
+        moment += centers.at(node.firstChild + octant);
     return moment;
 }
 
@@ -217,7 +216,7 @@ void physics::forces::Gravity::_pushChildren(const Octree& tree, const physics::
     const auto& nodes = tree.nodes();
 
     for (std::uint32_t octant = 0; octant < physics::OCTANT_COUNT; ++octant) {
-        const std::uint32_t child = node.first_child + octant;
+        const std::uint32_t child = node.firstChild + octant;
         if (nodes[child].count != 0)
             stack.push(child);
     }
@@ -225,7 +224,7 @@ void physics::forces::Gravity::_pushChildren(const Octree& tree, const physics::
 
 bool physics::forces::Gravity::_isLeaf(const physics::Node& node)
 {
-    return node.first_child == physics::INVALID_NODE;
+    return node.firstChild == physics::INVALID_NODE;
 }
 
 bool physics::forces::Gravity::_containsSlot(const physics::Node& node, std::uint32_t slot)

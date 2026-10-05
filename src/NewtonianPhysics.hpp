@@ -1,6 +1,7 @@
 #pragma once
 
 #include <interfaces/IPhysicsEngine.hpp>
+#include "collisions/collider.hpp"
 #include "components/NewtonianState.hpp"
 #include "spatial/Octree.hpp"
 #include "forces/Gravity.hpp"
@@ -55,14 +56,16 @@ namespace physics {
              * @return The name of the physics engine.
              */
             [[nodiscard]] std::string getName() const override { return "NewtonianPhysics"; }
-            [[nodiscard]] forces::GravityMode getGravityMode() const { return _gravity_mode; }
-            void setGravityMode(forces::GravityMode mode) { _gravity_mode = mode; }
+            [[nodiscard]] forces::GravityMode getGravityMode() const { return _gravityMode; }
+            void setGravityMode(forces::GravityMode mode) { _gravityMode = mode; }
 
         private:
-            common::SpecificDataPhysics _world_state;
-            NewtonianState _newtonian_state;
-            forces::GravityMode _gravity_mode;
+            void _publishOrientations(common::WorldState& world, std::size_t count) const;
+            common::SpecificDataPhysics _worldState;
+            NewtonianState _newtonianState;
+            forces::GravityMode _gravityMode;
 
             Octree _octree;
+            Collider _collider;
     };
 } // namespace physics

@@ -4,7 +4,7 @@
  * Modes
  *   simulate  --lib L --scene S --dt D --frames F [--sample-every K] [--snapshots]
  *             [--reverse-at R] [--G g] --out O
- *             Drives the library exactly like Core does (syncIn, update, syncOut per
+ *             Drives the library exactly like Core does (syncIn, update, publish per
  *             frame) and records conserved quantities and, optionally, full state
  *             snapshots at sample points.
  *   reference --scene S --dt D --frames F [--sample-every K] [--substeps N]
@@ -27,6 +27,7 @@
 #include <thread>
 #include <vector>
 #include <nlohmann/json.hpp>
+#include "Contract.hpp"
 #include "Invariants.hpp"
 #include "Plugin.hpp"
 #include "Reference.hpp"
@@ -132,7 +133,7 @@ namespace {
         return std::chrono::duration<double, std::milli>(b - a).count();
     }
 
-    json sample(std::size_t frame, double dt, const common::WorldState& world, const Options& o)
+    json sample(std::size_t frame, double dt, const qa::State& world, const Options& o)
     {
         const qa::Invariants inv = qa::computeInvariants(world, o.G, o.potential);
         json s;
@@ -163,7 +164,7 @@ namespace {
         return s;
     }
 
-    json header(const Options& o, const common::WorldState& world)
+    json header(const Options& o, const qa::State& world)
     {
         json h;
         h["runner_version"] = RUNNER_VERSION;
@@ -179,7 +180,7 @@ namespace {
 
     int runSimulate(const Options& o)
     {
-        common::WorldState world = qa::loadScene(o.scene);
+        qa::State world = qa::loadScene(o.scene);
         json out = header(o, world);
 
         qa::Plugin plugin(o.lib);
@@ -202,7 +203,7 @@ namespace {
             const auto a = Clock::now();
             engine->update(o.dt);
             updateMs.push_back(millis(a, Clock::now()));
-            world = engine->syncOut();
+            qa::apply(world, qa::collect(*engine));
 
             if (o.reverseAt >= 0 && frame == static_cast<std::size_t>(o.reverseAt)) {
                 for (auto& v : world.velocities) {
@@ -225,7 +226,7 @@ namespace {
 
     int runReference(const Options& o)
     {
-        common::WorldState world = qa::loadScene(o.scene);
+        qa::State world = qa::loadScene(o.scene);
         json out = header(o, world);
         out["engine"] = "ReferenceRK4LongDouble";
         out["substeps"] = o.substeps;
@@ -249,7 +250,7 @@ namespace {
 
     int runBench(const Options& o)
     {
-        const common::WorldState initial = qa::loadScene(o.scene);
+        const qa::State initial = qa::loadScene(o.scene);
         json out = header(o, initial);
         out["warmup"] = o.warmup;
         out["repeats"] = o.repeats;
@@ -258,7 +259,7 @@ namespace {
         json repeats = json::array();
 
         for (std::size_t r = 0; r < o.repeats; r += 1) {
-            common::WorldState world = initial;
+            qa::State world = initial;
             std::unique_ptr<common::IPhysicsEngine> engine = plugin.create();
             if (!engine)
                 throw std::runtime_error("get_engine() returned null");
@@ -272,7 +273,7 @@ namespace {
             for (std::size_t w = 0; w < o.warmup; w += 1) {
                 engine->syncIn(world);
                 engine->update(o.dt);
-                world = engine->syncOut();
+                qa::apply(world, qa::collect(*engine));
             }
 
             std::vector<double> updateMs;
@@ -285,8 +286,9 @@ namespace {
                 const auto b = Clock::now();
                 engine->update(o.dt);
                 const auto c = Clock::now();
-                world = engine->syncOut();
+                auto published = qa::collect(*engine);
                 const auto d = Clock::now();
+                qa::apply(world, std::move(published));
                 updateMs.push_back(millis(b, c));
                 frameMs.push_back(millis(a, d));
             }

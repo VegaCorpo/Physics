@@ -3,7 +3,7 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <types/World.hpp>
+#include "Contract.hpp"
 
 namespace qa {
 
@@ -27,20 +27,21 @@ namespace qa {
     };
 
     /**
-     * @brief Conserved quantities of a WorldState, accumulated in long double.
+     * @brief Conserved quantities of a state, accumulated in long double.
      *
      * The potential is the exact pairwise Newtonian potential (no softening),
      * so it is O(N^2); callers can skip it for large scenes.
      */
-    inline Invariants computeInvariants(const common::WorldState& world, double G, bool withPotential)
+    inline Invariants computeInvariants(const State& world, double G, bool withPotential)
     {
         Invariants inv;
         const std::size_t n = world.positions.size();
+        const auto& masses = massesOf(world);
 
         for (std::size_t i = 0; i < n; i += 1) {
             const auto& p = world.positions[i];
             const auto& v = world.velocities[i];
-            const long double m = scalarMass(world.mass[i]);
+            const long double m = scalarMass(masses[i]);
 
             if (!std::isfinite(p.x) || !std::isfinite(p.y) || !std::isfinite(p.z) || !std::isfinite(v.x) ||
                 !std::isfinite(v.y) || !std::isfinite(v.z)) {
@@ -68,14 +69,14 @@ namespace qa {
 
         if (withPotential) {
             for (std::size_t i = 0; i < n; i += 1) {
-                const long double mi = scalarMass(world.mass[i]);
+                const long double mi = scalarMass(masses[i]);
                 for (std::size_t j = i + 1; j < n; j += 1) {
                     const long double dx = (long double) world.positions[j].x - world.positions[i].x;
                     const long double dy = (long double) world.positions[j].y - world.positions[i].y;
                     const long double dz = (long double) world.positions[j].z - world.positions[i].z;
                     const long double r = std::sqrt(dx * dx + dy * dy + dz * dz);
                     if (r > 0)
-                        inv.potential -= G * mi * scalarMass(world.mass[j]) / r;
+                        inv.potential -= G * mi * scalarMass(masses[j]) / r;
                 }
             }
         }
