@@ -27,6 +27,11 @@ namespace physics {
     struct NewtonianState {
             static constexpr std::size_t BLOCK = 2 * SIMD_WIDTH;
 
+            static constexpr double SOFTENING_RADIUS_RATIO = 1e-3;
+            static constexpr double DEFAULT_EPSILON = 1e-6;
+
+            double epsilon = 0;
+
             aligned_vector<double> posX;
             aligned_vector<double> posY;
             aligned_vector<double> posZ;
@@ -54,12 +59,13 @@ namespace physics {
                 this->_trackEntities(world.entitiesId, count);
 
                 for (std::size_t i = 0; i < count; i += 1) {
-                    posX[i] = world.positions[i].x;
-                    posY[i] = world.positions[i].y;
-                    posZ[i] = world.positions[i].z;
-                    radius[i] = world.radius[i].value;
-                    scalarMass[i] = scalarMassOf(world.masses[i]);
+                    this->posX[i] = world.positions[i].x;
+                    this->posY[i] = world.positions[i].y;
+                    this->posZ[i] = world.positions[i].z;
+                    this->radius[i] = world.radius[i].value;
+                    this->scalarMass[i] = scalarMassOf(world.masses[i]);
                 }
+                this->epsilon = world.epsilon != 0.0 ? world.epsilon : this->_computeEpsilon();
             }
 
             void syncOut(common::SpecificDataPhysics& world) const
@@ -100,6 +106,20 @@ namespace physics {
 
                 this->_entities.assign(entities.begin(), entities.begin() + static_cast<std::ptrdiff_t>(count));
                 this->_forces_stale = true;
+            }
+
+            [[nodiscard]] double _computeEpsilon() const noexcept
+            {
+                double minRadius = 0.0;
+
+                for (std::size_t i = 0; i < this->_count; i += 1) {
+                    const double radius = this->radius[i];
+                    if (radius > 0.0 && (minRadius == 0.0 || radius < minRadius))
+                        minRadius = radius;
+                }
+                if (minRadius == 0.0)
+                    return DEFAULT_EPSILON;
+                return SOFTENING_RADIUS_RATIO * minRadius;
             }
 
             std::size_t _count = 0;

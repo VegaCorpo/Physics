@@ -27,24 +27,25 @@ cd Physics/tests
 ```
 
 ```sh
-./physics-qa unit                      # white-box unit tests of the collider/octree (tests/unit)
-./physics-qa unit --ref main --filter 'Collider.*'
+./physics-qa unit                      # white-box unit tests (tests/unit), stored in unit.json
+./physics-qa unit --ref main --filter 'Collider.*'   # filtered runs are not stored
 ./physics-qa overlaps ../../scenes/benchmark_1000.json   # which pairs are in contact at t=0?
 ```
 
-`run` exits non-zero when a required check fails. `--lib path/to/liborbital_physics.so`
+`run` and `test` also build and run the unit tests (skip them with `--no-unit`);
+they exit non-zero when a required check or a unit test fails. `--lib path/to/liborbital_physics.so`
 tests an already built library; `--local-common ../../Common` builds against the
 Common checkout instead of the tag pinned in `package-lock.cmake`.
 
-The HTML report is a single self-contained file with a navigation bar and five
+The HTML report is a single self-contained file with a navigation bar and six
 pages: Overview (how to read it, at-a-glance verdict, versions), Speed, Checks,
-Error charts and Method & glossary. It is written for non-specialists: one
+Unit tests, Error charts and Method & glossary. It is written for non-specialists: one
 plain-language question per check, every error given as a percentage plus its
 scientific value and, where possible, a distance, a bar showing how much of the
 allowed error was used, and charts with a reading guide, a shaded "too much error"
 zone, the worst point of the newest version called out, and a verdict line.
 
-Results land in `results/<commit>/<BuildType>/{meta,correctness,benchmark}.json`
+Results land in `results/<commit>/<BuildType>/{meta,correctness,benchmark,unit}.json`
 and are meant to be committed, so `report` can chart the whole history. The label
 gets a `-dirty` suffix when the working tree has uncommitted changes.
 
@@ -78,11 +79,13 @@ error is orders of magnitude below the module's double precision Verlet error.
 
 `common::IPhysicsEngine` does not expose the collision pairs, so the black-box
 runner cannot check them. `tests/unit/` is a separate GoogleTest project that
-compiles the module's `Octree.cpp` and `collider.cpp` directly and compares
+compiles the module's `Octree.cpp`, `collider.cpp` and `Gravity.cpp` directly and compares
 `Collider::checkCollisions()` with an O(n²) brute force applying the same rule
-(center distance ≤ r₁ + r₂). `./physics-qa unit` configures it under
+(center distance ≤ r₁ + r₂); it also checks the gravitational softening length
+(epsilon), which the interface does not expose either. `./physics-qa unit` configures it under
 `.work/<label>/unit-<BuildType>/`, builds it and runs it; it exits non-zero when a
-test fails. GTest comes from the system when installed, otherwise CPM fetches it
+test fails. The outcome of every test is stored in `results/<label>/<BuildType>/unit.json`
+(unless `--filter` or `--no-save` is given) and shown on the report's Unit tests page. GTest comes from the system when installed, otherwise CPM fetches it
 (`unit/package-lock.cmake`); Common and Boost come from the module's own lock.
 
 | Test group | What it verifies |
@@ -93,6 +96,8 @@ test fails. GTest comes from the system when installed, otherwise CPM fetches it
 | `Collider.SparseBenchmarkLike*` | a scene with the statistics of `scenes/benchmark_*.json` has **no** contact: zero collisions is correct there |
 | `Collider.Padding*`, `Deterministic`, `*Order*`, `*Translation*`, `Reusing*` | no phantom pairs from SIMD padding slots, deterministic, order- and origin-independent, no state leaking between frames |
 | `Octree.*` | permutation validity, leaves contain their bodies and partition them, leaf capacity, depth limit, rebuild |
+| `Epsilon.*` | softening length chosen by `NewtonianState::syncIn()`: a non-zero epsilon is kept, 0 derives `SOFTENING_RADIUS_RATIO` × smallest non-zero radius (order-independent, padding ignored, recomputed every sync), point masses fall back to `DEFAULT_EPSILON` |
+| `Softening.*` | `Gravity::apply()` follows the Plummer kernel with that epsilon; the derived value keeps the force within 1e-6 of Newton at contact distance and 1e-10 at orbital distances, and coincident bodies, self-interaction and padding never produce NaN |
 
 `./physics-qa overlaps SCENE...` applies the same contact rule to a scene file and
 prints the number of pairs in contact at t = 0, the closest pair of centers and the
@@ -120,7 +125,7 @@ tests/
   physics-qa            entry point (python3 -m qa)
   CMakeLists.txt        standalone runner project (PHYSICS_SOURCE_DIR selects the Common version)
   runner/               C++: Plugin.hpp (dlopen), Scene.hpp, Invariants.hpp, Reference.hpp, main.cpp
-  unit/                 C++ GoogleTest project compiling the module's Octree + Collider (white-box)
+  unit/                 C++ GoogleTest project compiling the module's Octree + Collider + Gravity (white-box)
   qa/                   Python: build.py, checks.py, bench.py, scenes.py, kepler.py, report.py, svg.py, cli.py,
                         unit.py (tests/unit driver), overlaps.py (scene contact diagnostics)
   config/               thresholds.json, benchmark.json

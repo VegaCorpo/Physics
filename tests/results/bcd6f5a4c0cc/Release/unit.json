@@ -1,0 +1,316 @@
+{
+ "filter": null,
+ "returncode": 1,
+ "time_s": 0.007,
+ "summary": {
+  "total": 47,
+  "pass": 40,
+  "fail": 7,
+  "skip": 0,
+  "error": 0
+ },
+ "suites": [
+  {
+   "name": "Collider",
+   "tests": [
+    {
+     "name": "EmptyStateReportsNothing",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "SingleBodyReportsNothing",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "TwoOverlappingSpheresAreDetected",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "TwoSpheresExactlyTouchingAreDetected",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "TwoSeparatedSpheresAreNotDetected",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "OverlapIsDetectedOnEveryAxisAndDiagonal",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "CoincidentZeroRadiusBodiesAreInContact",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "ChainOfThreeReportsOnlyAdjacentPairs",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "AsymmetricRadiiUseTheSumOfBothRadii",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "OverlapWithinOneLeafIsDetectedWhenTreeIsSubdivided",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "OverlapAcrossOctreeLeafBoundaryIsDetected",
+     "status": "fail",
+     "time_ms": 0.0,
+     "message": "/home/Valiance/Development/EIP/OrbitalEngine/Physics/tests/unit/collider_test.cpp:193\nExpected equality of these values:\n  unit::detect(state).pairs\n    Which is: {}\n  (PairSet{{8, 9}})\n    Which is: { (8, 9) }\n"
+    },
+    {
+     "name": "OverlapAcrossEverySplitPlaneIsDetected",
+     "status": "fail",
+     "time_ms": 0.0,
+     "message": "/home/Valiance/Development/EIP/OrbitalEngine/Physics/tests/unit/collider_test.cpp:62\nValue of: missed.empty()\n  Actual: false\nExpected: true\n4 of 4 contacts were not detected:\n  (8, 9) dist=200 r1+r2=1000\n  (10, 11) dist=200 r1+r2=1000\n  (12, 13) dist=200 r1+r2=1000\n  (14, 15) dist=346.41 r1+r2=1000\n\n"
+    },
+    {
+     "name": "LargeBodyOverlappingManySmallOnesAcrossLeaves",
+     "status": "fail",
+     "time_ms": 0.0,
+     "message": "/home/Valiance/Development/EIP/OrbitalEngine/Physics/tests/unit/collider_test.cpp:231\nExpected equality of these values:\n  withBig\n    Which is: 2\n  200u\n    Which is: 200\nevery small body overlaps the big one\n\n/home/Valiance/Development/EIP/OrbitalEngine/Physics/tests/unit/collider_test.cpp:62\nValue of: missed.empty()\n  Actual: false\nExpected: true\n198 of 200 contacts were not detected:\n  (0, 1) dist=516119 r1+r2=1e+06\n  (0, 2) dist=405728 r1+r2=1e+06\n  (0, 3) dist=589137 r1+r2=1e+06\n  (0, 4) dist=826936 r1+r2=1e+06\n  (0, 5) dist=694924 r1+r2=1e+06\n  (0, 6) dist=663313 r1+r2=1e+06\n  (0, 7) dist=442079 r1+r2=1e+06\n  (0, 8) dist=403946 r1+r2=1e+06\n  (0, 9) dist=660650 r1+r2=1e+06\n  (0, 10) dist=611371 r1+r2=1e+06\n  ... (188 more)\n\n"
+    },
+    {
+     "name": "ManyCoincidentBodiesHitTheDepthLimit",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "DenseRandomClusterMatchesBruteForce",
+     "status": "fail",
+     "time_ms": 2.0,
+     "message": "/home/Valiance/Development/EIP/OrbitalEngine/Physics/tests/unit/collider_test.cpp:62\nValue of: missed.empty()\n  Actual: false\nExpected: true\n19 of 62 contacts were not detected:\n  (15, 395) dist=6531.08 r1+r2=6733.56\n  (16, 554) dist=7118.66 r1+r2=8398.52\n  (48, 149) dist=7073.92 r1+r2=8431.02\n  (59, 782) dist=4030.56 r1+r2=9454.9\n  (115, 156) dist=7624.39 r1+r2=8431.81\n  (125, 711) dist=6336.46 r1+r2=7187.35\n  (136, 678) dist=6434.08 r1+r2=8964.37\n  (231, 334) dist=7481.56 r1+r2=7992.03\n  (244, 957) dist=4834.13 r1+r2=6119.59\n  (303, 372) dist=6375.96 r1+r2=6820.25\n  ... (9 more)\n\n"
+    },
+    {
+     "name": "DenseRandomClusterMatchesBruteForceOtherSeeds",
+     "status": "fail",
+     "time_ms": 1.0,
+     "message": "/home/Valiance/Development/EIP/OrbitalEngine/Physics/tests/unit/collider_test.cpp:62\nValue of: missed.empty()\n  Actual: false\nExpected: true\n18 of 53 contacts were not detected:\n  (2, 343) dist=4636.15 r1+r2=4832.84\n  (24, 497) dist=4035.34 r1+r2=6611.24\n  (25, 69) dist=5736.38 r1+r2=6493.35\n  (41, 452) dist=4449.88 r1+r2=6644.58\n  (51, 358) dist=4704.71 r1+r2=5518.82\n  (69, 370) dist=7219.67 r1+r2=7783.08\n  (96, 142) dist=3909.33 r1+r2=4485.22\n  (106, 441) dist=5400.35 r1+r2=5812.53\n  (137, 203) dist=7294.96 r1+r2=7784.52\n  (147, 352) dist=2950.29 r1+r2=3026.36\n  ... (8 more)\n\n\n/home/Valiance/Development/EIP/OrbitalEngine/Physics/tests/unit/collider_test.cpp:62\nValue of: missed.empty()\n  Actual: false\nExpected: true\n17 of 59 contacts were not detected:\n  (19, 25) dist=6036.97 r1+r2=6105.81\n  (24, 119) dist=5298.1 r1+r2=5720.1\n  (54, 55) dist=7725.65 r1+r2=7747.79\n  (55, 180) dist=6815.53 r1+r2=7834.37\n  (55, 279) dist=5264.22 r1+r2=6614.1\n  (60, 240) dist=6381.99 r1+r2=6397.83\n  (83, 372) dist=4591.47 r1+r2=5376.33\n  (175, 344) dist=4185 r1+r2=5787.2\n  (180, 279) dist=4074.43 r1+r2=6546.28\n  (200, 305) dist=3562.04 r1+r2=5121.74\n  ... (7 more)\n\n\n/home/Valiance/Development/EIP/OrbitalEngine/Physics/tests/unit/collider_test.cpp:62\nValue of: missed.empty()\n  Actual: false\nExpected: true\n22 of 66 contacts were not detected:\n  (3, 118) dist=5864.58 r1+r2=6307.55\n  (39, 407) dist=5322.78 r1+r2=6550.62\n  (40, 75) dist=3866.56 r1+r2=4728.57\n  (45, 493) dist=3141.94 r1+r2=5748.71\n  (46, 111) dist=4865.7 r1+r2=4871.59\n  (50, 126) dist=3168.45 r1+r2=4228.2\n  (68, 271) dist=6920.7 r1+r2=7584.07\n  (86, 255) dist=3934.46 r1+r2=7463.46\n  (106, 381) dist=4770.34 r1+r2=6340.31\n  (106, 417) dist=6092.47 r1+r2=7217.48\n  ... (12 more)\n\n\n/home/Valiance/Development/EIP/OrbitalEngine/Physics/tests/unit/collider_test.cpp:62\nValue of: missed.empty()\n  Actual: false\nExpected: true\n23 of 66 contacts were not detected:\n  (29, 114) dist=5414.46 r1+r2=6741.52\n  (29, 138) dist=6731.46 r1+r2=7792.27\n  (59, 447) dist=2596.16 r1+r2=5404.6\n  (67, 176) dist=3639.92 r1+r2=6349.47\n  (68, 129) dist=5255.39 r1+r2=5520.97\n  (122, 349) dist=4609.24 r1+r2=5687.87\n  (125, 337) dist=4522.63 r1+r2=7221.27\n  (125, 371) dist=4208.71 r1+r2=7155.38\n  (126, 349) dist=6275.16 r1+r2=7083.89\n  (129, 283) dist=6433.29 r1+r2=7297.06\n  ... (13 more)\n\n"
+    },
+    {
+     "name": "MixedRadiiClusterMatchesBruteForce",
+     "status": "fail",
+     "time_ms": 0.0,
+     "message": "/home/Valiance/Development/EIP/OrbitalEngine/Physics/tests/unit/collider_test.cpp:62\nValue of: missed.empty()\n  Actual: false\nExpected: true\n41 of 48 contacts were not detected:\n  (3, 801) dist=232672 r1+r2=280457\n  (16, 804) dist=234735 r1+r2=253496\n  (40, 800) dist=357322 r1+r2=363312\n  (68, 801) dist=279150 r1+r2=280449\n  (96, 802) dist=206504 r1+r2=340404\n  (104, 802) dist=151310 r1+r2=340345\n  (118, 801) dist=261124 r1+r2=280480\n  (146, 802) dist=298977 r1+r2=340389\n  (157, 802) dist=276498 r1+r2=340383\n  (175, 802) dist=287408 r1+r2=340345\n  ... (31 more)\n\n"
+    },
+    {
+     "name": "TwoDistantDenseClustersMatchBruteForce",
+     "status": "fail",
+     "time_ms": 0.0,
+     "message": "/home/Valiance/Development/EIP/OrbitalEngine/Physics/tests/unit/collider_test.cpp:62\nValue of: missed.empty()\n  Actual: false\nExpected: true\n209 of 422 contacts were not detected:\n  (0, 53) dist=4426.94 r1+r2=4689.24\n  (0, 83) dist=2864.09 r1+r2=5523.76\n  (1, 24) dist=1585.37 r1+r2=5075.22\n  (1, 62) dist=4547.69 r1+r2=5582.3\n  (4, 265) dist=3113.27 r1+r2=3677.8\n  (6, 238) dist=4483.02 r1+r2=4686.88\n  (8, 297) dist=2762.11 r1+r2=3835.76\n  (12, 127) dist=4348.17 r1+r2=5427.19\n  (13, 28) dist=4414.24 r1+r2=4596.23\n  (14, 237) dist=3790.74 r1+r2=5073.49\n  ... (199 more)\n\n"
+    },
+    {
+     "name": "SparseBenchmarkLikeClusterHasNoContactByConstruction",
+     "status": "pass",
+     "time_ms": 1.0,
+     "message": null
+    },
+    {
+     "name": "PaddingSlotsAreNeverReportedAsBodies",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "ResultIsDeterministic",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "ResultIsIndependentOfBodyOrder",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "ResultIsIndependentOfTranslation",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "ReusingTheSameColliderAndOctreeAcrossFramesGivesFreshResults",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    }
+   ]
+  },
+  {
+   "name": "Octree",
+   "tests": [
+    {
+     "name": "EmptyStateBuildsNoNode",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "SmallSceneIsASingleLeaf",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "LeavesPartitionTheBodiesAndContainThem",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "RootBoxContainsEveryBody",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "CoincidentBodiesStopAtDepthLimit",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "RebuildClearsPreviousTree",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    }
+   ]
+  },
+  {
+   "name": "Epsilon",
+   "tests": [
+    {
+     "name": "NonZeroEpsilonIsKeptAsIs",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "ZeroEpsilonIsDerivedFromTheSmallestRadius",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "DerivedEpsilonDoesNotDependOnBodyOrder",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "ZeroRadiiAreIgnoredWhenDerivingEpsilon",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "PointMassesFallBackToTheDefault",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "EmptyWorldFallsBackToTheDefault",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "PaddingSlotsDoNotAffectTheDerivedValue",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "DerivedValueIsRecomputedOnEverySync",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "SwitchingBetweenExplicitAndDerivedValues",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    }
+   ]
+  },
+  {
+   "name": "Softening",
+   "tests": [
+    {
+     "name": "ExplicitEpsilonFollowsThePlummerKernel",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "DerivedEpsilonIsUsedByGravity",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "DerivedEpsilonKeepsTheForceExactAtContact",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "DerivedEpsilonIsNegligibleAtOrbitalDistances",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "CoincidentPointMassesProduceFiniteForces",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "CoincidentBodiesWithRadiiProduceFiniteForces",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "SelfInteractionAndPaddingNeverProduceNaN",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    },
+    {
+     "name": "DerivedEpsilonKeepsForcesSymmetric",
+     "status": "pass",
+     "time_ms": 0.0,
+     "message": null
+    }
+   ]
+  }
+ ]
+}

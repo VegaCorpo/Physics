@@ -1,4 +1,4 @@
-"""Persistent results: results/<label>/<BuildType>/{meta,correctness,benchmark}.json."""
+"""Persistent results: results/<label>/<BuildType>/{meta,correctness,benchmark,unit}.json."""
 
 from __future__ import annotations
 
@@ -47,7 +47,7 @@ def result_dir(label: str, build_type: str, root: Path = RESULTS_DIR) -> Path:
 
 
 def save(label: str, build_type: str, meta: dict, correctness: dict | None, benchmark: dict | None,
-         root: Path = RESULTS_DIR) -> Path:
+         root: Path = RESULTS_DIR, unit: dict | None = None) -> Path:
     target = result_dir(label, build_type, root)
     target.mkdir(parents=True, exist_ok=True)
     existing = load_one(target)
@@ -60,6 +60,9 @@ def save(label: str, build_type: str, meta: dict, correctness: dict | None, benc
     if benchmark is not None:
         with open(target / "benchmark.json", "w", encoding="utf-8") as handle:
             json.dump(benchmark, handle, indent=1)
+    if unit is not None:
+        with open(target / "unit.json", "w", encoding="utf-8") as handle:
+            json.dump(unit, handle, indent=1)
     return target
 
 
@@ -71,6 +74,7 @@ class Entry:
     correctness: dict | None
     benchmark: dict | None
     path: Path
+    unit: dict | None = None
 
     @property
     def commit_date(self) -> str:
@@ -83,7 +87,7 @@ class Entry:
 
 def load_one(target: Path) -> dict:
     out: dict = {}
-    for name in ("meta", "correctness", "benchmark"):
+    for name in ("meta", "correctness", "benchmark", "unit"):
         path = target / f"{name}.json"
         if path.exists():
             with open(path, encoding="utf-8") as handle:
@@ -104,7 +108,7 @@ def load_all(root: Path = RESULTS_DIR, build_type: str | None = None) -> list[En
                 continue
             entries.append(Entry(label=label_dir.name, build_type=type_dir.name, meta=data["meta"],
                                  correctness=data.get("correctness"), benchmark=data.get("benchmark"),
-                                 path=type_dir))
+                                 path=type_dir, unit=data.get("unit")))
     # Chronological by commit date, dirty/prebuilt snapshots after their base commit.
     entries.sort(key=lambda e: (e.commit_date, e.meta.get("dirty", False), e.label))
     return entries
