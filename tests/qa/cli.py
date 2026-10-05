@@ -8,7 +8,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from . import __version__, bench, build, checks, config, report, results
+from . import __version__, bench, build, checks, config, overlaps, report, results, unit
 from .paths import DEFAULT_REPO, RESULTS_DIR, WORK_DIR
 from .runner import Runner
 
@@ -112,6 +112,24 @@ def cmd_build(args) -> int:
     return 0
 
 
+def cmd_unit(args) -> int:
+    _, exe = unit.build(args.repo, args.ref, args.build_type, args.jobs, args.local_common, args.rebuild)
+    return unit.run(exe, args.filter, args.verbose)
+
+
+def cmd_overlaps(args) -> int:
+    total = 0
+    for scene in args.scenes:
+        text, count = overlaps.describe(scene, args.limit)
+        print(text)
+        total += count
+    if args.expect_some and total == 0:
+        print("[overlaps] no pair in contact: the module cannot report any collision on these scenes",
+              file=sys.stderr)
+        return 1
+    return 0
+
+
 def cmd_clean(args) -> int:
     for path in WORK_DIR.glob("*/src"):
         os.system(f"git -C '{args.repo}' worktree remove --force '{path}' >/dev/null 2>&1")
@@ -152,6 +170,26 @@ def main(argv: list[str] | None = None) -> int:
     p_build = sub.add_parser("build", help="only build the module and the runner")
     _add_build_args(p_build)
     p_build.set_defaults(func=cmd_build)
+
+    p_unit = sub.add_parser("unit", help="build and run the white-box unit tests (tests/unit) on a ref")
+    p_unit.add_argument("--repo", type=Path, default=DEFAULT_REPO,
+                        help="module repository to test (default: the parent of tests/)")
+    p_unit.add_argument("--ref", default=None,
+                        help="git ref to build in a detached worktree; default: the working tree as is")
+    p_unit.add_argument("--build-type", default="Release", choices=["Release", "Debug"])
+    p_unit.add_argument("--jobs", type=int, default=os.cpu_count() or 4)
+    p_unit.add_argument("--local-common", type=Path, default=None,
+                        help="use this Common checkout instead of the tag pinned by package-lock.cmake")
+    p_unit.add_argument("--rebuild", action="store_true", help="wipe and rebuild the unit tests")
+    p_unit.add_argument("--filter", default=None, help="GoogleTest filter, e.g. 'Collider.*'")
+    p_unit.add_argument("--verbose", action="store_true", help="print every test, not only failures")
+    p_unit.set_defaults(func=cmd_unit)
+
+    p_ov = sub.add_parser("overlaps", help="count the pairs of bodies in contact at t=0 in scene files")
+    p_ov.add_argument("scenes", nargs="+", type=Path, help="scene JSON files (engine layout)")
+    p_ov.add_argument("--limit", type=int, default=20, help="pairs to list per scene")
+    p_ov.add_argument("--expect-some", action="store_true", help="exit 1 when no scene has any contact")
+    p_ov.set_defaults(func=cmd_overlaps)
 
     p_report = sub.add_parser("report", help="render an HTML report from stored results")
     p_report.add_argument("labels", nargs="*", help="result labels or commit prefixes (default: all)")

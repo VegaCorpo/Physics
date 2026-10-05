@@ -417,7 +417,7 @@ def check_empty_world(ctx: Context, cfg: dict) -> Result:
     res = Result("empty_world", cfg.get("category", "robustness"))
     sim = ctx.runner.simulate(ctx.scene("empty", []), ctx.dt, int(cfg["frames"]), tag="empty")
     res.metrics = [Metric("bodies_out", float(len(sim["samples"][-1]["positions"])), 0.0, "==")]
-    res.details = "init/update/syncOut with zero entities must not crash"
+    res.details = "init/update/publish with zero entities must not crash"
     return res
 
 

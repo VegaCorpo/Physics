@@ -3,7 +3,7 @@
 Black-box test, accuracy and benchmark tooling for the physics module. It never
 links the module: a small C++ runner `dlopen()`s the built `liborbital_physics.so`
 and drives it through `common::IPhysicsEngine` exactly like Core does
-(`syncIn`, `update(dt)`, `syncOut` each frame). Any commit since the interface
+(`syncIn`, `update(dt)`, `publish` each frame). Any commit since the interface
 stabilised (b2a4058 onward) and any other module implementing the interface can
 therefore be measured and compared.
 
@@ -24,6 +24,12 @@ cd Physics/tests
 ./physics-qa report --out report.html  # every stored result, chronological
 ./physics-qa compare 6fbfca1 a54a3ef   # exactly two result sets, exit 2 on a benchmark regression
 ./physics-qa clean                     # remove worktrees and builds under .work/
+```
+
+```sh
+./physics-qa unit                      # white-box unit tests of the collider/octree (tests/unit)
+./physics-qa unit --ref main --filter 'Collider.*'
+./physics-qa overlaps ../../scenes/benchmark_1000.json   # which pairs are in contact at t=0?
 ```
 
 `run` exits non-zero when a required check fails. `--lib path/to/liborbital_physics.so`
@@ -68,6 +74,33 @@ The reference integrator is `runner/Reference.hpp`: classical RK4 in 80-bit long
 double on the unsoftened Newtonian problem. With 16 substeps per 7200 s frame its
 error is orders of magnitude below the module's double precision Verlet error.
 
+## Collisions: unit tests and scene diagnostics
+
+`common::IPhysicsEngine` does not expose the collision pairs, so the black-box
+runner cannot check them. `tests/unit/` is a separate GoogleTest project that
+compiles the module's `Octree.cpp` and `collider.cpp` directly and compares
+`Collider::checkCollisions()` with an O(n²) brute force applying the same rule
+(center distance ≤ r₁ + r₂). `./physics-qa unit` configures it under
+`.work/<label>/unit-<BuildType>/`, builds it and runs it; it exits non-zero when a
+test fails. GTest comes from the system when installed, otherwise CPM fetches it
+(`unit/package-lock.cmake`); Common and Boost come from the module's own lock.
+
+| Test group | What it verifies |
+|---|---|
+| `Collider.Two*`, `Chain*`, `Asymmetric*`, `Coincident*` | the contact rule on 2-3 bodies: overlap, exact touch, separation, r₁ + r₂ (regression for the radius read from `posZ`) |
+| `Collider.*AcrossOctreeLeafBoundary*`, `*AcrossEverySplitPlane*`, `LargeBody*` | pairs whose bodies fall in different octree leaves are still reported |
+| `Collider.*MatchesBruteForce*` | dense random clusters (hundreds of contacts), mixed radii, two distant clusters: exact pair set equality with the brute force |
+| `Collider.SparseBenchmarkLike*` | a scene with the statistics of `scenes/benchmark_*.json` has **no** contact: zero collisions is correct there |
+| `Collider.Padding*`, `Deterministic`, `*Order*`, `*Translation*`, `Reusing*` | no phantom pairs from SIMD padding slots, deterministic, order- and origin-independent, no state leaking between frames |
+| `Octree.*` | permutation validity, leaves contain their bodies and partition them, leaf capacity, depth limit, rebuild |
+
+`./physics-qa overlaps SCENE...` applies the same contact rule to a scene file and
+prints the number of pairs in contact at t = 0, the closest pair of centers and the
+largest possible contact distance (2 × max radius). Use it before concluding that
+the module misses collisions: the engine's `benchmark_1000.json` has its closest
+centers 1.25e7 km apart for radii below 1e5 km, so no collision can ever be
+reported on it. `--expect-some` exits 1 when no scene has any contact.
+
 ## Benchmarks
 
 `config/benchmark.json` sets the body counts (10, 100, 1000, 10000, 50000 by
@@ -87,7 +120,9 @@ tests/
   physics-qa            entry point (python3 -m qa)
   CMakeLists.txt        standalone runner project (PHYSICS_SOURCE_DIR selects the Common version)
   runner/               C++: Plugin.hpp (dlopen), Scene.hpp, Invariants.hpp, Reference.hpp, main.cpp
-  qa/                   Python: build.py, checks.py, bench.py, scenes.py, kepler.py, report.py, svg.py, cli.py
+  unit/                 C++ GoogleTest project compiling the module's Octree + Collider (white-box)
+  qa/                   Python: build.py, checks.py, bench.py, scenes.py, kepler.py, report.py, svg.py, cli.py,
+                        unit.py (tests/unit driver), overlaps.py (scene contact diagnostics)
   config/               thresholds.json, benchmark.json
   results/              committed JSON results per commit and build type
   .work/                worktrees, builds, generated scenes, raw runner output (ignored)
