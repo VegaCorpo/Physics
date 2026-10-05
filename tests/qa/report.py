@@ -8,6 +8,7 @@ and each chart carries a one-sentence explanation of what it shows.
 from __future__ import annotations
 
 import math
+import re
 from datetime import datetime, timezone
 from html import escape
 
@@ -98,6 +99,24 @@ CHECK_INFO = {
                             "the current integrator skips bodies with zero mass, so this check is informational."),
     "large_scene_smoke": ("10 000 bodies run cleanly", "Does a large scene run without numeric blow-up?",
                           "Counts non-finite values after 2 frames."),
+}
+
+# GoogleTest suites of tests/unit: question answered, what the tests do (in words).
+UNIT_SUITES = {
+    "Epsilon": ("Is the softening length chosen correctly?",
+                "The module keeps the epsilon given by the engine, or derives it from the smallest body radius when "
+                "the engine sends 0, falling back to a fixed default for point masses. These tests check the value "
+                "picked in every case: explicit, derived, zero radii, empty scene, padding slots, re-sync."),
+    "Softening": ("Does gravity use the softening length as intended?",
+                  "Softening removes the infinite force when two bodies get very close. These tests check that the "
+                  "force follows the Plummer formula, stays exact once bodies are further apart than their radii, "
+                  "and never produces NaN for coincident bodies."),
+    "Collider": ("Are all touching bodies detected, and only those?",
+                 "The collision pairs found through the octree are compared with a brute-force check of every pair, "
+                 "on hand-made cases (touching, separated, across octree cells) and on random clusters."),
+    "Octree": ("Is the spatial tree built correctly?",
+               "The octree splits space so that collisions only test nearby bodies. These tests check that every "
+               "body ends in exactly one leaf that contains it, and that rebuilding the tree starts from scratch."),
 }
 
 METRIC_WORDS = {
@@ -217,6 +236,7 @@ nav.topbar a.active { background: var(--info); color: #fff; }
 .meter > span { position:absolute; left:0; top:0; bottom:0; border-radius: 3px; background: var(--good); }
 .meter.over > span { background: var(--critical); } .meter.warn > span { background: var(--warning); }
 .meter-label { font-size: 12px; color: var(--text-muted); }
+pre.failure { white-space: pre-wrap; word-break: break-word; font-size: 12px; background: var(--surface-2); padding: 6px 8px; border-radius: 4px; margin: 4px 0; }
 dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; } dt { font-weight: 600; } dd { margin: 0; color: var(--text-secondary); }
 @media (max-width: 640px) { dl { grid-template-columns: 1fr; } .charts { grid-template-columns: 1fr; } }
 """
@@ -291,6 +311,23 @@ def _steps_per_s(ms: float) -> str:
         return "–"
     rate = 1000.0 / ms
     return f"{rate:,.0f} steps/s" if rate >= 10 else f"{rate:.1f} steps/s"
+
+
+def _humanize(name: str) -> str:
+    """GoogleTest CamelCase name -> sentence: NonZeroEpsilonIsKeptAsIs -> Non zero epsilon is kept as is."""
+    words = re.findall(r"NaN|[A-Z]+(?=[A-Z][a-z]|\b|\d)|[A-Z]?[a-z]+|\d+", name) or [name]
+    text = " ".join(w if w == "NaN" or (w.isupper() and len(w) > 1) else w.lower() for w in words)
+    return text[:1].upper() + text[1:]
+
+
+def _unit_badge(u: dict | None) -> str:
+    """Badge + counts for a unit.json summary, '–' when the unit tests were not run."""
+    if not u:
+        return "–"
+    c = u["summary"]
+    ok = not (c["fail"] or c["error"])
+    text = f"{c['pass']} pass · {c['fail']} fail" + (f" · {c['skip']} skipped" if c["skip"] else "")
+    return f"{_badge('pass' if ok else 'fail')} {text}" + (" · crashed" if c["error"] else "")
 
 
 def _version_name(i: int) -> str:
@@ -415,6 +452,13 @@ def _section_glance(entries: list[Entry], with_bench: list[Entry], plan: dict) -
                          f"<div class='value'>{_km(m['value'] * ctx['scale_km'])} off</div>"
                          f"<div class='sub'>position of an Earth-like planet after one simulated year: "
                          f"{_pct(m['value'])} of the orbit radius. Energy conserved to {_pct(kep['metrics'][1]['value'])}.</div></div>")
+    u = latest.unit["summary"] if latest.unit else None
+    if u:
+        ok = not (u["fail"] or u["error"])
+        cards.append(f"<div class='card'><div class='label'>Unit tests of {_version_name(i_latest)}</div>"
+                     f"<div class='value'>{_badge('pass' if ok else 'fail', 'All unit tests pass' if ok else 'Some unit tests fail')}</div>"
+                     f"<div class='sub'>{u['pass']} of {u['total']} passed · softening, collisions, octree"
+                     f"{' · the test binary crashed' if u['error'] else ''}</div></div>")
     if latest in with_bench:
         res = latest.benchmark["results"]
         big = max(res, key=lambda r: r["bodies"])
@@ -451,7 +495,8 @@ def _section_versions(entries: list[Entry]) -> str:
     out = ["<h2>Versions compared</h2>",
            "<p class='lead'>Oldest first. The label is the git commit of the physics module; the machine column "
            "matters because timings are only comparable on the same hardware.</p>",
-           "<div class='wrap'><table><tr><th>Version</th><th>Commit</th><th>Date</th><th>Checks</th><th>Machine</th></tr>"]
+           "<div class='wrap'><table><tr><th>Version</th><th>Commit</th><th>Date</th><th>Checks</th><th>Unit tests</th>"
+           "<th>Machine</th></tr>"]
     for i, e in enumerate(entries):
         m = e.meta
         c = e.correctness["summary"] if e.correctness else None
@@ -462,7 +507,8 @@ def _section_versions(entries: list[Entry]) -> str:
         out.append(f"<tr><td><span class='swatch' style='background:var(--series-{i % 8 + 1})'></span><b>{_version_name(i)}</b>"
                    f"{' <span class=muted>(uncommitted changes)</span>' if m.get('dirty') else ''}</td>"
                    f"<td>{escape(m.get('subject', ''))}<br><code>{escape(m.get('commit', '')[:12])}</code></td>"
-                   f"<td>{escape(m.get('commit_date', '')[:10])}</td><td>{tests}</td><td>{machine}</td></tr>")
+                   f"<td>{escape(m.get('commit_date', '')[:10])}</td><td>{tests}</td><td>{_unit_badge(e.unit)}</td>"
+                   f"<td>{machine}</td></tr>")
     out.append("</table></div>")
     return "\n".join(out)
 
@@ -588,6 +634,70 @@ def _section_checks(entries: list[Entry], with_tests: list[Entry]) -> str:
         out.append("</table></div>")
     out.append("<p class='muted'>All limits come from <code>config/thresholds.json</code>; the raw values are stored in "
                "<code>results/&lt;commit&gt;/&lt;build&gt;/correctness.json</code>.</p>")
+    return "\n".join(out)
+
+
+def _section_unit(entries: list[Entry], with_unit: list[Entry]) -> str:
+    out = ["<h2>Unit tests</h2>"]
+    if not with_unit:
+        out.append("<p>No unit test results stored. Run <code>./physics-qa unit</code> (or <code>./physics-qa run</code>) "
+                   "to add them.</p>")
+        return "\n".join(out)
+    out.append("<p class='lead'>Some behaviour cannot be seen through the public interface the engine uses: the "
+               "softening length and the collision pairs are internal. These tests compile the module's own source "
+               "files and check them directly. Each one either passes or fails; there is no tolerance to read.</p>")
+    missing = [e for e in entries if not e.unit]
+    if missing:
+        out.append(f"<p class='muted'>Not run for {', '.join(_version_name(entries.index(e)) for e in missing)}: those "
+                   "columns are left out.</p>")
+    suites: list[str] = []
+    for e in with_unit:
+        for suite in e.unit["suites"]:
+            if suite["name"] not in suites:
+                suites.append(suite["name"])
+    by_entry = {e.label: {(s["name"], t["name"]): t for s in e.unit["suites"] for t in s["tests"]} for e in with_unit}
+
+    for e in with_unit:
+        if e.unit["summary"]["error"]:
+            out.append(f"<p>{_badge('error')} The unit test binary of {_version_name(entries.index(e))} stopped "
+                       f"with exit code {e.unit.get('returncode')} before completing its report.</p>")
+    for suite in suites:
+        question, intro = UNIT_SUITES.get(suite, (suite, ""))
+        names: list[str] = []
+        for e in with_unit:
+            for s in e.unit["suites"]:
+                if s["name"] == suite:
+                    names += [t["name"] for t in s["tests"] if t["name"] not in names]
+        counts, any_failed = [], False
+        for e in with_unit:
+            tests = [by_entry[e.label][(suite, n)] for n in names if (suite, n) in by_entry[e.label]]
+            failed = sum(t["status"] == "fail" for t in tests)
+            any_failed = any_failed or failed > 0
+            counts.append(f"{_version_name(entries.index(e))}: {len(tests) - failed}/{len(tests)}")
+        out.append(f"<h3>{escape(suite)} — {escape(question)}</h3><p>{escape(intro)}</p>"
+                   f"<details{' open' if any_failed else ''}><summary>{len(names)} tests · "
+                   f"passed {escape(' · '.join(counts))}</summary>"
+                   f"<div class='wrap'><table><tr><th style='width:46%'>Test</th>")
+        for e in with_unit:
+            out.append(f"<th>{_col_header(entries.index(e), e)}</th>")
+        out.append("</tr>")
+        for name in names:
+            out.append(f"<tr><td><div class='check-name'>{escape(_humanize(name))}</div>"
+                       f"<div class='muted'><code>{escape(suite)}.{escape(name)}</code></div></td>")
+            for e in with_unit:
+                t = by_entry[e.label].get((suite, name))
+                if not t:
+                    out.append("<td>–</td>")
+                    continue
+                cell = _badge(t["status"])
+                if t.get("message"):
+                    cell += (f"<details><summary class='muted'>why it failed</summary>"
+                             f"<pre class='failure'>{escape(t['message'])}</pre></details>")
+                out.append(f"<td>{cell}</td>")
+            out.append("</tr>")
+        out.append("</table></div></details>")
+    out.append("<p class='muted'>Sources in <code>tests/unit/</code> (GoogleTest); the raw results are stored in "
+               "<code>results/&lt;commit&gt;/&lt;build&gt;/unit.json</code>.</p>")
     return "\n".join(out)
 
 
@@ -761,8 +871,8 @@ def _section_method(latest: Entry) -> str:
     return "\n".join(out)
 
 
-PAGES = [("overview", "Overview"), ("speed", "Speed"), ("checks", "Checks"), ("charts", "Error charts"),
-         ("method", "Method & glossary")]
+PAGES = [("overview", "Overview"), ("speed", "Speed"), ("checks", "Checks"), ("unit", "Unit tests"),
+         ("charts", "Error charts"), ("method", "Method & glossary")]
 
 
 def render(entries: list[Entry], plan: dict) -> str:
@@ -770,6 +880,7 @@ def render(entries: list[Entry], plan: dict) -> str:
     entries = list(entries)
     with_bench = [e for e in entries if e.benchmark and e.benchmark.get("results")]
     with_tests = [e for e in entries if e.correctness]
+    with_unit = [e for e in entries if e.unit]
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     nav = "<nav class='topbar'><span class='brand'>Physics QA</span>" + "".join(
         f"<a href='#{pid}'>{escape(title)}</a>" for pid, title in PAGES) + "</nav>"
@@ -781,6 +892,7 @@ def render(entries: list[Entry], plan: dict) -> str:
                                _section_versions(entries)]),
         "speed": _section_speed(entries, with_bench, plan),
         "checks": _section_checks(entries, with_tests),
+        "unit": _section_unit(entries, with_unit),
         "charts": _section_charts(entries, with_tests) if with_tests else "<h2>Error charts</h2><p>No correctness data stored.</p>",
         "method": _section_method(entries[-1]),
     }

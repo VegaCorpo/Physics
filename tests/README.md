@@ -27,24 +27,25 @@ cd Physics/tests
 ```
 
 ```sh
-./physics-qa unit                      # white-box unit tests of the collider/octree (tests/unit)
-./physics-qa unit --ref main --filter 'Collider.*'
+./physics-qa unit                      # white-box unit tests (tests/unit), stored in unit.json
+./physics-qa unit --ref main --filter 'Collider.*'   # filtered runs are not stored
 ./physics-qa overlaps ../../scenes/benchmark_1000.json   # which pairs are in contact at t=0?
 ```
 
-`run` exits non-zero when a required check fails. `--lib path/to/liborbital_physics.so`
+`run` and `test` also build and run the unit tests (skip them with `--no-unit`);
+they exit non-zero when a required check or a unit test fails. `--lib path/to/liborbital_physics.so`
 tests an already built library; `--local-common ../../Common` builds against the
 Common checkout instead of the tag pinned in `package-lock.cmake`.
 
-The HTML report is a single self-contained file with a navigation bar and five
+The HTML report is a single self-contained file with a navigation bar and six
 pages: Overview (how to read it, at-a-glance verdict, versions), Speed, Checks,
-Error charts and Method & glossary. It is written for non-specialists: one
+Unit tests, Error charts and Method & glossary. It is written for non-specialists: one
 plain-language question per check, every error given as a percentage plus its
 scientific value and, where possible, a distance, a bar showing how much of the
 allowed error was used, and charts with a reading guide, a shaded "too much error"
 zone, the worst point of the newest version called out, and a verdict line.
 
-Results land in `results/<commit>/<BuildType>/{meta,correctness,benchmark}.json`
+Results land in `results/<commit>/<BuildType>/{meta,correctness,benchmark,unit}.json`
 and are meant to be committed, so `report` can chart the whole history. The label
 gets a `-dirty` suffix when the working tree has uncommitted changes.
 
@@ -83,7 +84,8 @@ compiles the module's `Octree.cpp`, `collider.cpp` and `Gravity.cpp` directly an
 (center distance ≤ r₁ + r₂); it also checks the gravitational softening length
 (epsilon), which the interface does not expose either. `./physics-qa unit` configures it under
 `.work/<label>/unit-<BuildType>/`, builds it and runs it; it exits non-zero when a
-test fails. GTest comes from the system when installed, otherwise CPM fetches it
+test fails. The outcome of every test is stored in `results/<label>/<BuildType>/unit.json`
+(unless `--filter` or `--no-save` is given) and shown on the report's Unit tests page. GTest comes from the system when installed, otherwise CPM fetches it
 (`unit/package-lock.cmake`); Common and Boost come from the module's own lock.
 
 | Test group | What it verifies |
