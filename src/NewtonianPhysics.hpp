@@ -6,6 +6,7 @@
 #include "spatial/Octree.hpp"
 #include "forces/Gravity.hpp"
 #include "types/World.hpp"
+#include "types/types.hpp"
 
 namespace physics {
     class NewtonianPhysics : public common::IPhysicsEngine {
@@ -28,6 +29,10 @@ namespace physics {
              * @param dt The time step in seconds.
              */
             void update(double dt) override;
+
+            void physicsPause() override { this->_state = common::ModuleState::PAUSE; };
+
+            void physicsResume() override { this->_state = common::ModuleState::RUNNING; };
 
             /**
              * @brief Shutdown the physics engine and remove all private physics components from the registry.
@@ -67,5 +72,6 @@ namespace physics {
 
             Octree _octree;
             Collider _collider;
+            common::ModuleState _state = common::ModuleState::RUNNING;
     };
 } // namespace physics

@@ -1,5 +1,6 @@
 #include "NewtonianPhysics.hpp"
 #include <algorithm>
+#include <types/types.hpp>
 #include <utility>
 #include "components/NewtonianState.hpp"
 #include "forces/Gravity.hpp"
@@ -18,6 +19,8 @@ void physics::NewtonianPhysics::init(common::SpecificDataPhysics world)
 
 void physics::NewtonianPhysics::update(double dt)
 {
+    if (this->_state != common::ModuleState::RUNNING)
+        return;
     this->_newtonianState.syncIn(this->_worldState);
 
     if (this->_newtonianState.forcesStale()) {
