@@ -152,8 +152,9 @@ auto physics::forces::Gravity::_bodyPoint(const NewtonianState& state, std::uint
 auto physics::forces::Gravity::_gravityFrom(const PointMass& source, const PointMass& target) -> Vec3
 {
     const Vec3 delta = source.pos - target.pos;
-    const double invDistance = 1.0 / std::sqrt(delta.norm2() + physics::NewtonianState::DEFAULT_EPSILON * physics::NewtonianState::DEFAULT_EPSILON);
-    const double mag = G * target.mass * source.mass * invDistance * invDistance * invDistance;
+    const double invDistance = 1.0 /
+        std::sqrt(delta.norm2() + physics::NewtonianState::DEFAULT_EPSILON * physics::NewtonianState::DEFAULT_EPSILON);
+    const double mag = G * source.mass * invDistance * invDistance * invDistance;
 
     return delta * mag;
 }
@@ -208,7 +209,8 @@ auto physics::forces::Gravity::_leafForce(const physics::Node& node, const Newto
 
 bool physics::forces::Gravity::_canApproximate(const physics::Node& node, const Vec3& center, const Vec3& target)
 {
-    const double distance2 = (center - target).norm2() + physics::NewtonianState::DEFAULT_EPSILON * physics::NewtonianState::DEFAULT_EPSILON;
+    const double distance2 =
+        (center - target).norm2() + physics::NewtonianState::DEFAULT_EPSILON * physics::NewtonianState::DEFAULT_EPSILON;
     const double size = node.halfSize * 2.0;
 
     return size * size < BARNES_HUT_THETA2 * distance2;
