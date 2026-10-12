@@ -1,9 +1,12 @@
 #include "NewtonianPhysics.hpp"
 #include <algorithm>
+#include <cstddef>
+#include <expected>
 #include <types/types.hpp>
 #include <utility>
 #include "components/NewtonianState.hpp"
 #include "forces/Gravity.hpp"
+#include "integration/TimeStep.hpp"
 #include "integration/Verlet.hpp"
 #include "types/World.hpp"
 #include "utils/rotation.hpp"
@@ -19,20 +22,15 @@ void physics::NewtonianPhysics::init(common::SpecificDataPhysics world)
 
 void physics::NewtonianPhysics::update(double dt)
 {
-    if (this->_state != common::ModuleState::RUNNING)
+    const std::expected<integration::SubSteps, integration::TimeStepError> subSteps = this->_timeStep.split(dt);
+
+    if (!this->_canAdvance(subSteps))
         return;
     this->_newtonianState.syncIn(this->_worldState);
+    this->_refreshStaleForces(subSteps->duration);
 
-    if (this->_newtonianState.forcesStale()) {
-        this->_octree.build(this->_newtonianState);
-        forces::Gravity::apply(this->_newtonianState, dt, this->_gravityMode, this->_octree);
-        this->_newtonianState.markForcesFresh();
-    }
-
-    integration::Verlet::preIntegrate(this->_worldState, this->_newtonianState, dt);
-    this->_octree.build(this->_newtonianState);
-    forces::Gravity::apply(this->_newtonianState, dt, this->_gravityMode, this->_octree);
-    integration::Verlet::postIntegrate(this->_worldState, this->_newtonianState, dt);
+    for (std::size_t stepIndex = 0; stepIndex < subSteps->count; stepIndex += 1)
+        this->_integrate(subSteps->duration);
     common::rotation::advanceAll(this->_worldState.orientations, this->_worldState.angularVelocities, dt);
 
     this->_collider.checkCollisions(this->_newtonianState, this->_octree);
@@ -68,6 +66,29 @@ common::WorldState physics::NewtonianPhysics::publish()
     }
     this->_publishOrientations(world, count);
     return world;
+}
+
+bool physics::NewtonianPhysics::_canAdvance(
+    const std::expected<integration::SubSteps, integration::TimeStepError>& subSteps) const
+{
+    return this->_state == common::ModuleState::RUNNING && subSteps.has_value() && !subSteps->empty();
+}
+
+void physics::NewtonianPhysics::_refreshStaleForces(double subStepDuration)
+{
+    if (!this->_newtonianState.forcesStale())
+        return;
+    this->_octree.build(this->_newtonianState);
+    forces::Gravity::apply(this->_newtonianState, subStepDuration, this->_gravityMode, this->_octree);
+    this->_newtonianState.markForcesFresh();
+}
+
+void physics::NewtonianPhysics::_integrate(double subStepDuration)
+{
+    integration::Verlet::preIntegrate(this->_worldState, this->_newtonianState, subStepDuration);
+    this->_octree.build(this->_newtonianState);
+    forces::Gravity::apply(this->_newtonianState, subStepDuration, this->_gravityMode, this->_octree);
+    integration::Verlet::postIntegrate(this->_worldState, this->_newtonianState, subStepDuration);
 }
 
 void physics::NewtonianPhysics::_publishOrientations(common::WorldState& world, std::size_t count) const

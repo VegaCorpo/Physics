@@ -1,10 +1,12 @@
 #pragma once
 
+#include <expected>
 #include <interfaces/IPhysicsEngine.hpp>
 #include "collisions/collider.hpp"
 #include "components/NewtonianState.hpp"
 #include "spatial/Octree.hpp"
 #include "forces/Gravity.hpp"
+#include "integration/TimeStep.hpp"
 #include "types/World.hpp"
 #include "types/types.hpp"
 
@@ -65,10 +67,15 @@ namespace physics {
             void setGravityMode(forces::GravityMode mode) { _gravityMode = mode; }
 
         private:
+            [[nodiscard]] bool
+            _canAdvance(const std::expected<integration::SubSteps, integration::TimeStepError>& subSteps) const;
+            void _refreshStaleForces(double subStepDuration);
+            void _integrate(double subStepDuration);
             void _publishOrientations(common::WorldState& world, std::size_t count) const;
             common::SpecificDataPhysics _worldState;
             NewtonianState _newtonianState;
             forces::GravityMode _gravityMode;
+            integration::TimeStep _timeStep;
 
             Octree _octree;
             Collider _collider;
