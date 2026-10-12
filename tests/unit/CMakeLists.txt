@@ -55,6 +55,13 @@ add_executable(physics_unit_tests
     ${PHYSICS_SOURCE_DIR}/src/forces/Gravity.cpp
 )
 
+if(EXISTS "${PHYSICS_SOURCE_DIR}/src/integration/TimeStep.cpp")
+    target_sources(physics_unit_tests PRIVATE
+        timestep_test.cpp
+        ${PHYSICS_SOURCE_DIR}/src/integration/TimeStep.cpp
+    )
+endif()
+
 target_compile_options(physics_unit_tests PRIVATE
     $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra>
 )

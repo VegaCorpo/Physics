@@ -70,6 +70,16 @@ per-body magnitudes when the total can be zero.
 | `padding_sizes` | robustness | body counts around SIMD block boundaries vs reference | tail/padding handling bugs |
 | `single_body_inertia`, `empty_world`, `coincident_bodies`, `large_scene_smoke` | robustness | straight line, no crash, no NaN | edge-case handling |
 | `massless_body_moves` | robustness (not required) | analytic circular orbit of a massless probe | massless bodies are currently skipped by the integrator |
+| `timestep_ui_scales` | timestep | analytic Kepler orbit over 10 years, one run per dt from 1 h to 1 decade | long updates are not split into stable sub-steps (a 1-year dt ejects the planet) |
+| `timestep_split_invariance` | timestep | 240 updates of 7200 s vs fewer updates of 2× … 240× 7200 s, bitwise | sub-stepping differs from consecutive updates (state lost between sub-steps, wrong sub-step size) |
+| `timestep_changes_mid_run` | timestep | analytic Kepler orbit, dt changed between updates on one engine (`--dt-schedule`) | state cached across updates assumes a constant dt |
+| `timestep_satellite` | timestep (not required) | Sun-Earth-Moon, 20 updates of one year vs the RK4 reference (600 s substeps) | the moon's phase drifts; WARN today (≈ 1% of the lunar orbit per year with 7200 s Verlet sub-steps) |
+| `timestep_zero_dt`, `timestep_invalid_dt` | timestep | dt = 0 and negative / NaN / ±inf dt leave the state untouched and finite | invalid time steps corrupt the scene |
+
+The time step is chosen by the user (via the UI and Core) and handed to `update(dt)`. The module splits
+every update into the smallest number of equal sub-steps of at most 7200 s (`src/integration/TimeStep`),
+so the accuracy does not depend on the chosen scale; `convergence_order` therefore measures the order with
+dt levels at or below 7200 s. dt = 0 is a no-op, negative and non-finite dt are rejected (state unchanged).
 
 The reference integrator is `runner/Reference.hpp`: classical RK4 in 80-bit long
 double on the unsoftened Newtonian problem. With 16 substeps per 7200 s frame its
@@ -82,7 +92,8 @@ runner cannot check them. `tests/unit/` is a separate GoogleTest project that
 compiles the module's `Octree.cpp`, `collider.cpp` and `Gravity.cpp` directly and compares
 `Collider::checkCollisions()` with an O(n²) brute force applying the same rule
 (center distance ≤ r₁ + r₂); it also checks the gravitational softening length
-(epsilon), which the interface does not expose either. `./physics-qa unit` configures it under
+(epsilon), which the interface does not expose either, and, when the checkout has
+`src/integration/TimeStep.cpp`, how an update is cut into sub-steps. `./physics-qa unit` configures it under
 `.work/<label>/unit-<BuildType>/`, builds it and runs it; it exits non-zero when a
 test fails. The outcome of every test is stored in `results/<label>/<BuildType>/unit.json`
 (unless `--filter` or `--no-save` is given) and shown on the report's Unit tests page. GTest comes from the system when installed, otherwise CPM fetches it
@@ -97,6 +108,7 @@ test fails. The outcome of every test is stored in `results/<label>/<BuildType>/
 | `Collider.Padding*`, `Deterministic`, `*Order*`, `*Translation*`, `Reusing*` | no phantom pairs from SIMD padding slots, deterministic, order- and origin-independent, no state leaking between frames |
 | `Octree.*` | permutation validity, leaves contain their bodies and partition them, leaf capacity, depth limit, rebuild |
 | `Epsilon.*` | softening length chosen by `NewtonianState::syncIn()`: a non-zero epsilon is kept, 0 derives `SOFTENING_RADIUS_RATIO` × smallest non-zero radius (order-independent, padding ignored, recomputed every sync), point masses fall back to `DEFAULT_EPSILON` |
+| `TimeStep.*` | how `integration::TimeStep::split()` cuts an update: one identical step up to 7200 s, the minimal number of equal sub-steps above (1 day → 12, 1 year → 4383), sub-steps never exceed the maximum and cover the frame exactly, dt = 0 needs none, negative / NaN / ±inf / overflowing durations and invalid maxima are rejected |
 | `Softening.*` | `Gravity::apply()` follows the Plummer kernel with that epsilon; the derived value keeps the force within 1e-6 of Newton at contact distance and 1e-10 at orbital distances, and coincident bodies, self-interaction and padding never produce NaN |
 
 `./physics-qa overlaps SCENE...` applies the same contact rule to a scene file and
@@ -124,9 +136,11 @@ threads, as the module's TBB parallel loops expect.
 tests/
   physics-qa            entry point (python3 -m qa)
   CMakeLists.txt        standalone runner project (PHYSICS_SOURCE_DIR selects the Common version)
-  runner/               C++: Plugin.hpp (dlopen), Scene.hpp, Invariants.hpp, Reference.hpp, main.cpp
+  runner/               C++: Plugin.hpp (dlopen), Scene.hpp, Schedule.hpp (dt per update), Invariants.hpp,
+                        Reference.hpp, main.cpp
   unit/                 C++ GoogleTest project compiling the module's Octree + Collider + Gravity (white-box)
-  qa/                   Python: build.py, checks.py, bench.py, scenes.py, kepler.py, report.py, svg.py, cli.py,
+  qa/                   Python: build.py, checks.py, timestep.py (time step checks), suite.py (check registry and
+                        runner loop), bench.py, scenes.py, kepler.py, report.py, svg.py, cli.py,
                         unit.py (tests/unit driver), overlaps.py (scene contact diagnostics)
   config/               thresholds.json, benchmark.json
   results/              committed JSON results per commit and build type
@@ -139,6 +153,8 @@ tests/
 cmake -S . -B .work/runner -DPHYSICS_SOURCE_DIR=.. && cmake --build .work/runner
 .work/runner/physics_qa_runner simulate --lib ../build/liborbital_physics.so \
     --scene ../../scenes/simulation_1.json --dt 7200 --frames 4383 --sample-every 100 --snapshots --out sim.json
+.work/runner/physics_qa_runner simulate --lib ../build/liborbital_physics.so \
+    --scene ../../scenes/simulation_1.json --dt-schedule 7200:120,86400:30,31557600:1 --sample-every 1 --snapshots --out sched.json
 .work/runner/physics_qa_runner reference --scene ../../scenes/simulation_1.json --dt 7200 --frames 4383 --out ref.json
 .work/runner/physics_qa_runner bench --lib ../build/liborbital_physics.so --scene ../../scenes/benchmark_1000.json \
     --dt 7200 --frames 30 --warmup 3 --repeats 3 --out bench.json

@@ -3,7 +3,7 @@
  *
  * Modes
  *   simulate  --lib L --scene S --dt D --frames F [--sample-every K] [--snapshots]
- *             [--reverse-at R] [--G g] --out O
+ *             [--reverse-at R] [--dt-schedule DT:FRAMES,...] [--G g] --out O
  *             Drives the library exactly like Core does (syncIn, update, publish per
  *             frame) and records conserved quantities and, optionally, full state
  *             snapshots at sample points.
@@ -32,10 +32,11 @@
 #include "Plugin.hpp"
 #include "Reference.hpp"
 #include "Scene.hpp"
+#include "Schedule.hpp"
 
 namespace {
 
-    constexpr const char* RUNNER_VERSION = "1.0.0";
+    constexpr const char* RUNNER_VERSION = "1.1.0";
     constexpr double DEFAULT_G = 6.67430e-20; // km^3 kg^-1 s^-2, matches the module
 
     using json = nlohmann::json;
@@ -46,6 +47,7 @@ namespace {
             std::string lib;
             std::string scene;
             std::string out;
+            std::string dtSchedule;
             double dt = 7200.0;
             double G = DEFAULT_G;
             double softening = 0.0;
@@ -65,7 +67,8 @@ namespace {
                   << "usage: physics_qa_runner <simulate|reference|bench> [options]\n"
                   << "  --lib PATH --scene PATH --out PATH --dt SECONDS --frames N\n"
                   << "  --sample-every N --snapshots --reverse-at FRAME --no-potential\n"
-                  << "  --substeps N --softening KM --G VALUE --warmup N --repeats N\n";
+                  << "  --substeps N --softening KM --G VALUE --warmup N --repeats N\n"
+                  << "  --dt-schedule DT:FRAMES[,DT:FRAMES...]  (simulate: overrides --dt and --frames)\n";
         std::exit(2);
     }
 
@@ -93,6 +96,8 @@ namespace {
                 o.out = need(i);
             else if (a == "--dt")
                 o.dt = std::stod(need(i));
+            else if (a == "--dt-schedule")
+                o.dtSchedule = need(i);
             else if (a == "--G")
                 o.G = std::stod(need(i));
             else if (a == "--softening")
@@ -123,6 +128,8 @@ namespace {
             usage("--scene and --out are required");
         if (o.mode != "reference" && o.lib.empty())
             usage("--lib is required");
+        if (!o.dtSchedule.empty())
+            o.frames = qa::Schedule::parse(o.dtSchedule).totalFrames();
         if (o.sampleEvery == 0)
             o.sampleEvery = o.frames == 0 ? 1 : o.frames;
         return o;
@@ -133,12 +140,12 @@ namespace {
         return std::chrono::duration<double, std::milli>(b - a).count();
     }
 
-    json sample(std::size_t frame, double dt, const qa::State& world, const Options& o)
+    json sample(std::size_t frame, double elapsed, const qa::State& world, const Options& o)
     {
         const qa::Invariants inv = qa::computeInvariants(world, o.G, o.potential);
         json s;
         s["frame"] = frame;
-        s["t"] = static_cast<double>(frame) * dt;
+        s["t"] = elapsed;
         s["kinetic"] = static_cast<double>(inv.kinetic);
         s["potential"] = static_cast<double>(inv.potential);
         s["energy"] = static_cast<double>(inv.kinetic + inv.potential);
@@ -173,13 +180,23 @@ namespace {
         h["bodies"] = world.positions.size();
         h["dt"] = o.dt;
         h["frames"] = o.frames;
+        if (!o.dtSchedule.empty())
+            h["dt_schedule"] = o.dtSchedule;
         h["G"] = o.G;
         h["hardware_threads"] = std::thread::hardware_concurrency();
         return h;
     }
 
+    qa::Schedule scheduleOf(const Options& options)
+    {
+        if (options.dtSchedule.empty())
+            return {options.dt, options.frames};
+        return qa::Schedule::parse(options.dtSchedule);
+    }
+
     int runSimulate(const Options& o)
     {
+        const qa::Schedule schedule = scheduleOf(o);
         qa::State world = qa::loadScene(o.scene);
         json out = header(o, world);
 
@@ -196,12 +213,12 @@ namespace {
         json samples = json::array();
         std::vector<double> updateMs;
         updateMs.reserve(o.frames);
-        samples.push_back(sample(0, o.dt, world, o));
+        samples.push_back(sample(0, schedule.elapsedAt(0), world, o));
 
         for (std::size_t frame = 1; frame <= o.frames; frame += 1) {
             engine->syncIn(world);
             const auto a = Clock::now();
-            engine->update(o.dt);
+            engine->update(schedule.dtAt(frame));
             updateMs.push_back(millis(a, Clock::now()));
             qa::apply(world, qa::collect(*engine));
 
@@ -213,7 +230,7 @@ namespace {
                 }
             }
             if (frame % o.sampleEvery == 0 || frame == o.frames)
-                samples.push_back(sample(frame, o.dt, world, o));
+                samples.push_back(sample(frame, schedule.elapsedAt(frame), world, o));
         }
         engine->shutdown();
         engine.reset();
@@ -234,13 +251,13 @@ namespace {
 
         qa::Reference ref(world, o.G, static_cast<long double>(o.softening) * o.softening);
         json samples = json::array();
-        samples.push_back(sample(0, o.dt, world, o));
+        samples.push_back(sample(0, 0.0, world, o));
 
         for (std::size_t frame = 1; frame <= o.frames; frame += 1) {
             ref.step(o.dt, o.substeps);
             if (frame % o.sampleEvery == 0 || frame == o.frames) {
                 ref.writeTo(world);
-                samples.push_back(sample(frame, o.dt, world, o));
+                samples.push_back(sample(frame, static_cast<double>(frame) * o.dt, world, o));
             }
         }
         out["samples"] = std::move(samples);

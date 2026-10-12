@@ -37,6 +37,11 @@ CATEGORIES = {
                    "Edge cases and invariances: results must not depend on the order of the bodies, on where "
                    "the scene is located, or on how many bodies there are; degenerate scenes must not crash "
                    "or produce NaN."),
+    "timestep": ("Does the module honour the time step chosen by the user?",
+                 "The interface lets the user pick how much simulated time passes per update, from minutes to "
+                 "a decade. The module splits long updates into short internal sub-steps so the orbits stay "
+                 "exact whatever the choice; these checks verify that, plus the behaviour for dt = 0 and for "
+                 "invalid values."),
 }
 
 # Human name, question answered, how it is measured (in words).
@@ -99,6 +104,35 @@ CHECK_INFO = {
                             "the current integrator skips bodies with zero mass, so this check is informational."),
     "large_scene_smoke": ("10 000 bodies run cleanly", "Does a large scene run without numeric blow-up?",
                           "Counts non-finite values after 2 frames."),
+    "timestep_ui_scales": ("Every time scale keeps the orbit exact",
+                           "Whether one update covers an hour, a day, a month, a year or a decade, does the planet "
+                           "end up where it should after ten years?",
+                           "The same Earth-like orbit is run once per time scale. The value is the largest gap to "
+                           "the exact position, as a fraction of the orbit radius. Without sub-steps, a one-year "
+                           "update throws the planet out of its orbit."),
+    "timestep_split_invariance": ("Long updates equal many short ones",
+                                  "Does one update of 2 days give the same result as 24 updates of 2 hours?",
+                                  "A 64-body cluster is advanced with updates of 1×, 2×, 3×, 12×, 48× and 240× "
+                                  "2 hours. The value is the largest position difference with the 2-hour run, "
+                                  "as a fraction of the cluster size; it should be zero."),
+    "timestep_changes_mid_run": ("Changing the time scale during a run",
+                                 "When the user switches between scales while the simulation runs, does the orbit "
+                                 "stay exact?",
+                                 "One engine receives updates of 2 h, 1 day, 10 min, 1 month, 1 h, 1 year and "
+                                 "12 h in turn. Every update is compared with the exact elongated orbit."),
+    "timestep_satellite": ("A moon stays on its orbit at one year per update",
+                           "With one update per year, does a moon keep circling its planet at the right place "
+                           "over twenty years?",
+                           "Sun, Earth and Moon advanced one year per update and compared every year with the "
+                           "high-precision reference. The value is the gap of the Moon around the Earth, as a "
+                           "fraction of its orbit radius. Known limitation: with 2-hour Verlet sub-steps the Moon "
+                           "drifts by about 1% of its orbit per year, so this check is informational."),
+    "timestep_zero_dt": ("A zero time step freezes the scene", "Does an update with dt = 0 leave everything in place?",
+                         "Counts the position and velocity values that changed after 10 updates with dt = 0."),
+    "timestep_invalid_dt": ("Invalid time steps are refused",
+                            "Are negative, NaN or infinite time steps ignored instead of corrupting the scene?",
+                            "Counts the values that changed or became NaN / infinite after updates with each "
+                            "invalid time step."),
 }
 
 # GoogleTest suites of tests/unit: question answered, what the tests do (in words).
@@ -114,6 +148,11 @@ UNIT_SUITES = {
     "Collider": ("Are all touching bodies detected, and only those?",
                  "The collision pairs found through the octree are compared with a brute-force check of every pair, "
                  "on hand-made cases (touching, separated, across octree cells) and on random clusters."),
+    "TimeStep": ("Is each update cut into the right sub-steps?",
+                 "A long update chosen by the user (a day, a year…) is split into equal sub-steps of at most two "
+                 "hours. These tests check the number and size of the sub-steps for many durations, that they "
+                 "always cover the whole update, and that zero, negative, NaN, infinite or absurdly long "
+                 "durations are handled explicitly."),
     "Octree": ("Is the spatial tree built correctly?",
                "The octree splits space so that collisions only test nearby bodies. These tests check that every "
                "body ends in exactly one leaf that contains it, and that rebuilding the tree starts from scratch."),
@@ -133,11 +172,17 @@ METRIC_WORDS = {
     "mismatching_values": "differing values",
     "non_finite_values": "NaN / infinite values",
     "bodies_out": "bodies returned",
+    "changed_or_non_finite_values": "changed or NaN values",
+    "max_rel_moon_position_error": "moon off by",
+    "max_rel_planet_position_error": "planet off by",
 }
 
 GLOSSARY = [
     ("Physics step (frame)", "One call to the module's update() with a time step dt of 7200 s (two hours of "
                              "simulated time). The engine calls it repeatedly; its duration bounds the frame rate."),
+    ("Sub-step", "A slice of at most 7200 s of one update. A longer update (a day, a year…) is cut into equal "
+                 "sub-steps, so the accuracy does not depend on the time scale chosen by the user, only the "
+                 "computation time does."),
     ("Relative error", "An error divided by a natural size of the problem, so that scenes of very different "
                        "scale can share one limit. 0.001% of an orbit radius of 150 million km is 1 500 km."),
     ("Limit", "The largest error accepted for a check. All limits are in config/thresholds.json and were "
@@ -1046,14 +1091,30 @@ CHART_SPECS = [
      "Gap to the reference after 20 steps, for scene sizes around the SIMD batch size (horizontal axis: number of bodies).",
      "A smooth staircase far below the limit. A sudden jump at particular sizes would reveal a bug in how the last, "
      "partial batch is handled."),
+    ("timestep_ui_scales", "error_vs_dt", "max_rel_position_error", "Time step chosen by the user",
+     "Ten years of orbit: error versus time scale",
+     "Final position error after ten years, for each simulated duration per update (horizontal axis: seconds per "
+     "update, from one hour to one decade).",
+     "A flat line under the limit from 2 hours upward: longer updates are split into the same sub-steps, so they "
+     "are exactly as accurate. Only the shortest scale is a little more accurate."),
+    ("timestep_changes_mid_run", "position_error", "max_rel_position_error", "Time step chosen by the user",
+     "Switching scales during a run: position error",
+     "Distance to the exact elongated orbit while the time scale is switched between hours, days, months and a year.",
+     "A smooth curve under the limit with no jump when the scale changes."),
+    ("timestep_satellite", "moon_position_error", "max_rel_moon_position_error", "Time step chosen by the user",
+     "Moon at one year per update: position error",
+     "Distance between the simulated Moon and its reference position around the Earth, once per simulated year.",
+     "A curve that stays under the limit. A straight rising line means the Moon runs steadily ahead of or behind "
+     "its true position (phase drift of the integrator)."),
 ]
 
-X_WORDS = {"orbits": "orbits completed", "days": "simulated days", "dt (s)": "time step (seconds)", "bodies": "number of bodies"}
+X_WORDS = {"orbits": "orbits completed", "days": "simulated days", "years": "simulated years", "dt (s)": "time step (seconds)", "bodies": "number of bodies"}
 Y_WORDS = {"max |Δr| / a": "position error (fraction of orbit radius)",
            "|ΔE| / |E0|": "energy error (fraction of initial energy)",
            "max |Δr| / RMS radius": "position error (fraction of system size)",
            "max |Δv| / RMS speed": "speed error (fraction of typical speed)",
-           "|ΔP| / Σm|v|": "momentum error (relative)", "|Δr| / a": "position error (fraction of orbit radius)"}
+           "|ΔP| / Σm|v|": "momentum error (relative)",
+           "|Δr moon| / moon orbit radius": "moon position error (fraction of its orbit radius)", "|Δr| / a": "position error (fraction of orbit radius)"}
 
 
 def _chart_guide() -> str:

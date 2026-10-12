@@ -10,6 +10,7 @@ import json
 import math
 import random
 import struct
+from dataclasses import dataclass
 from pathlib import Path
 
 G_DEFAULT = 6.67430e-20
@@ -136,6 +137,30 @@ def massless_probe(a: float = 149597870.0, G: float = G_DEFAULT) -> list[dict]:
         body("probe", (0.0, 0), (a, 0.0, 0.0), (0.0, v, 0.0)),
     ]
 
+
+@dataclass(frozen=True)
+class SatelliteSystem:
+    star_mass: tuple[float, int]
+    planet_mass: tuple[float, int]
+    moon_mass: tuple[float, int]
+    planet_distance: float
+    moon_distance: float
+
+
+def _circular_speed(total_mass: float, distance: float, gravity: float) -> float:
+    return math.sqrt(gravity * total_mass / distance)
+
+
+def satellite_system(system: SatelliteSystem, gravity: float = G_DEFAULT) -> list[dict]:
+    planet_and_moon = effective_mass(*system.planet_mass) + effective_mass(*system.moon_mass)
+    planet_speed = _circular_speed(effective_mass(*system.star_mass) + planet_and_moon, system.planet_distance, gravity)
+    moon_speed = _circular_speed(planet_and_moon, system.moon_distance, gravity)
+    moon_position = (system.planet_distance + system.moon_distance, 0.0, 0.0)
+    return [
+        body("star", system.star_mass, (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)),
+        body("planet", system.planet_mass, (system.planet_distance, 0.0, 0.0), (0.0, planet_speed, 0.0)),
+        body("moon", system.moon_mass, moon_position, (0.0, planet_speed + moon_speed, 0.0)),
+    ]
 
 def shuffled(bodies: list[dict], seed: int) -> tuple[list[dict], list[int]]:
     """Return a permuted copy and the permutation (new index -> original index)."""

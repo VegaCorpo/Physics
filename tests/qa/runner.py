@@ -46,6 +46,12 @@ class Runner:
             args.append("--no-potential")
         return self._exec(args, self._out(tag))
 
+    def simulate_schedule(self, scene: Path, schedule: list[tuple[float, int]], tag: str = "schedule") -> dict:
+        specification = ",".join(f"{dt!r}:{frames}" for dt, frames in schedule)
+        args = ["simulate", "--lib", str(self.lib), "--scene", str(scene), "--dt-schedule", specification,
+                "--sample-every", "1", "--snapshots"]
+        return self._exec(args, self._out(tag))
+
     def reference(self, scene: Path, dt: float, frames: int, sample_every: int | None = None,
                   substeps: int = 16, snapshots: bool = True, softening: float = 0.0, tag: str = "ref") -> dict:
         args = ["reference", "--scene", str(scene), "--dt", repr(dt), "--frames", str(frames),
