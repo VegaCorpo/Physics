@@ -108,10 +108,10 @@
       "eccentricity": 0.3,
       "duration_s": 15768000.0,
       "dt_levels": [
-        57600.0,
-        28800.0,
-        14400.0,
-        7200.0
+        7200.0,
+        3600.0,
+        1800.0,
+        900.0
       ],
       "expected_order": 2.0,
       "order_tolerance": 0.3
@@ -199,7 +199,139 @@
       "bodies": 10000,
       "seed": 42,
       "frames": 2
+    },
+    "timestep_ui_scales": {
+      "enabled": true,
+      "category": "timestep",
+      "primary_mass": [
+        1.989,
+        30
+      ],
+      "secondary_mass": [
+        5.97,
+        24
+      ],
+      "semi_major_axis_km": 149597870.0,
+      "eccentricity": 0.0167,
+      "duration_s": 315576000.0,
+      "dt_levels_s": [
+        3600.0,
+        7200.0,
+        86400.0,
+        2629800.0,
+        31557600.0,
+        315576000.0
+      ],
+      "max_rel_position_error": 0.0002,
+      "max_rel_energy_drift": 1e-11
+    },
+    "timestep_split_invariance": {
+      "enabled": true,
+      "category": "timestep",
+      "bodies": 64,
+      "seed": 9,
+      "base_dt_s": 7200.0,
+      "base_frames": 240,
+      "multipliers": [
+        2,
+        3,
+        12,
+        48,
+        240
+      ],
+      "max_rel_position_error": 1e-12
+    },
+    "timestep_changes_mid_run": {
+      "enabled": true,
+      "category": "timestep",
+      "primary_mass": [
+        1.989,
+        30
+      ],
+      "secondary_mass": [
+        5.97,
+        24
+      ],
+      "semi_major_axis_km": 149597870.0,
+      "eccentricity": 0.3,
+      "schedule": [
+        [
+          7200.0,
+          120
+        ],
+        [
+          86400.0,
+          30
+        ],
+        [
+          600.0,
+          288
+        ],
+        [
+          2629800.0,
+          2
+        ],
+        [
+          3600.0,
+          96
+        ],
+        [
+          31557600.0,
+          1
+        ],
+        [
+          43200.0,
+          60
+        ]
+      ],
+      "max_rel_position_error": 0.0001,
+      "max_rel_energy_drift": 5e-06
+    },
+    "timestep_satellite": {
+      "enabled": true,
+      "category": "timestep",
+      "star_mass": [
+        1.989,
+        30
+      ],
+      "planet_mass": [
+        5.97,
+        24
+      ],
+      "moon_mass": [
+        7.35,
+        22
+      ],
+      "planet_distance_km": 149597870.0,
+      "moon_distance_km": 384400.0,
+      "dt_s": 31557600.0,
+      "frames": 20,
+      "reference_substeps": 52596,
+      "max_rel_moon_position_error": 0.01,
+      "max_rel_planet_position_error": 0.0003,
+      "required": false
+    },
+    "timestep_zero_dt": {
+      "enabled": true,
+      "category": "timestep",
+      "bodies": 64,
+      "seed": 9,
+      "frames": 10
+    },
+    "timestep_invalid_dt": {
+      "enabled": true,
+      "category": "timestep",
+      "bodies": 64,
+      "seed": 9,
+      "frames": 5,
+      "invalid_dt": [
+        "-7200",
+        "-1e-300",
+        "nan",
+        "inf",
+        "-inf"
+      ]
     }
   },
-  "_calibration": "Defaults were calibrated on Physics a54a3ef (Release, dt=7200 s): each limit is 3-10x the measured value so genuine regressions trip it while run-to-run noise does not. Measured: kepler_circular pos 4.5e-6 / energy 1e-12; kepler_eccentric(e=0.6) pos 2.8e-4 / energy 1.5e-5; planetary pos 7.8e-6 / vel 6.8e-4; conservation energy 1.1e-5, momentum 8e-16; reversibility 1e-16; padding 1.8e-9; convergence order 2.000."
+  "_calibration": "Defaults were calibrated on Physics a54a3ef (Release, dt=7200 s): each limit is 3-10x the measured value so genuine regressions trip it while run-to-run noise does not. Measured: kepler_circular pos 4.5e-6 / energy 1e-12; kepler_eccentric(e=0.6) pos 2.8e-4 / energy 1.5e-5; planetary pos 7.8e-6 / vel 6.8e-4; conservation energy 1.1e-5, momentum 8e-16; reversibility 1e-16; padding 1.8e-9; convergence order 2.000. Time step checks calibrated on Physics 83f9883 + sub-stepping (Release): ui_scales pos 4.4e-5 / energy 6.9e-13 over 10 years, one update per scale from 1 h to 1 decade; changes_mid_run pos 1.7e-5 / energy 1.1e-6; split_invariance 0 (bitwise). convergence_order dt_levels are kept at or below the 7200 s maximum sub-step: larger frames are split into identical sub-steps, so their error no longer depends on dt. timestep_satellite (Sun-Earth-Moon, 20 updates of one year) measured moon 2.2e-1 / planet 8.8e-5: the moon limit is a target (1% of the lunar orbit after 20 years), not a calibration, so the check is not required and reports WARN until the integrator is improved; the planet limit is 3x the measured value."
 }

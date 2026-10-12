@@ -8,7 +8,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from . import __version__, bench, build, checks, config, overlaps, report, results, unit
+from . import __version__, bench, build, checks, config, overlaps, report, results, suite, unit
 from .paths import DEFAULT_REPO, RESULTS_DIR, WORK_DIR
 from .runner import Runner
 
@@ -66,7 +66,7 @@ def cmd_run(args) -> int:
         ctx = checks.Context(_runner(b, thresholds["G"], "tests"), WORK_DIR / b.label / "scenes", thresholds["dt"],
                              thresholds["G"], thresholds["reference"]["substeps"],
                              thresholds["reference"]["softening_km"])
-        correctness = checks.run_all(ctx, thresholds, args.only)
+        correctness = suite.run_all(ctx, thresholds, args.only)
         print(f"[tests] {correctness['summary']}")
     if not args.no_bench:
         plan = config.load_benchmark(args.benchmark)

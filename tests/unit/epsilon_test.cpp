@@ -48,11 +48,17 @@ namespace {
         return NewtonianState::SOFTENING_RADIUS_RATIO * static_cast<double>(static_cast<float>(radius));
     }
 
+    void applyDirectGravity(NewtonianState& state)
+    {
+        physics::Octree octree;
+        physics::forces::Gravity::apply(state, 0.0, physics::forces::GravityMode::BruteForce, octree);
+    }
+
     /// Acceleration of body 0 along +x, pulled by body 1 at distance d on the +x axis.
     double pullAlongX(double distance, double radius, double epsilon)
     {
         NewtonianState state = stateOf({{0.0, 0.0, 0.0, radius}, {distance, 0.0, 0.0, radius}}, epsilon);
-        physics::forces::Gravity::apply(state, 0.0);
+        applyDirectGravity(state);
         return state.forceX[0];
     }
 
@@ -207,7 +213,7 @@ TEST(Softening, CoincidentPointMassesProduceFiniteForces)
     // Without softening r^2 = 0 gives 0 * inf = NaN. The default epsilon must prevent it.
     NewtonianState state = stateOf({{5.0, -3.0, 2.0, 0.0}, {5.0, -3.0, 2.0, 0.0}}, 0.0);
     ASSERT_GT(state.epsilon, 0.0);
-    physics::forces::Gravity::apply(state, 0.0);
+    applyDirectGravity(state);
     for (std::size_t i = 0; i < state.size(); i += 1) {
         EXPECT_TRUE(std::isfinite(state.forceX[i]) && std::isfinite(state.forceY[i]) && std::isfinite(state.forceZ[i]))
             << "body " << i;
@@ -218,7 +224,7 @@ TEST(Softening, CoincidentPointMassesProduceFiniteForces)
 TEST(Softening, CoincidentBodiesWithRadiiProduceFiniteForces)
 {
     NewtonianState state = stateOf({{0.0, 0.0, 0.0, 1000.0}, {0.0, 0.0, 0.0, 500.0}}, 0.0);
-    physics::forces::Gravity::apply(state, 0.0);
+    applyDirectGravity(state);
     for (std::size_t i = 0; i < state.size(); i += 1)
         EXPECT_TRUE(std::isfinite(state.forceX[i]) && std::isfinite(state.forceY[i]) && std::isfinite(state.forceZ[i]))
             << "body " << i;
@@ -230,7 +236,7 @@ TEST(Softening, SelfInteractionAndPaddingNeverProduceNaN)
     for (std::size_t n : {1u, 2u, 7u, 8u, 9u, 15u, 16u, 17u, 33u}) {
         for (const double radiusMax : {0.0, 1.0e3}) {
             NewtonianState state = stateOf(unit::randomCluster(n, static_cast<unsigned>(n), 1.0e6, 0.0, radiusMax), 0.0);
-            physics::forces::Gravity::apply(state, 0.0);
+            applyDirectGravity(state);
             for (std::size_t i = 0; i < state.size(); i += 1)
                 ASSERT_TRUE(std::isfinite(state.forceX[i]) && std::isfinite(state.forceY[i]) &&
                             std::isfinite(state.forceZ[i]))
@@ -243,7 +249,7 @@ TEST(Softening, DerivedEpsilonKeepsForcesSymmetric)
 {
     // Equal masses: Newton's third law means the accelerations sum to zero.
     NewtonianState state = stateOf(unit::randomCluster(50, 3, 1.0e5, 100.0, 2000.0), 0.0);
-    physics::forces::Gravity::apply(state, 0.0);
+    applyDirectGravity(state);
     double sumX = 0.0;
     double sumY = 0.0;
     double sumZ = 0.0;

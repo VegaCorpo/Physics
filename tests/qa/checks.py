@@ -9,7 +9,6 @@ exclusively from `cfg` (config/thresholds.json).
 from __future__ import annotations
 
 import math
-import traceback
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -475,26 +474,3 @@ CHECKS = {
     "massless_body_moves": check_massless_body_moves,
     "large_scene_smoke": check_large_scene_smoke,
 }
-
-
-def run_all(ctx: Context, thresholds: dict, only: list[str] | None = None) -> dict:
-    results = []
-    for name, fn in CHECKS.items():
-        cfg = thresholds["checks"].get(name)
-        if cfg is None or not cfg.get("enabled", True) or (only and name not in only):
-            continue
-        print(f"[check] {name} ...", end=" ", flush=True)
-        try:
-            result = fn(ctx, cfg)
-        except Exception as exc:  # noqa: BLE001 - a crashing check must not stop the suite
-            result = Result(name, cfg.get("category", "robustness"), required=bool(cfg.get("required", True)),
-                            error=f"{exc}\n{traceback.format_exc()}")
-        worst = ""
-        if result.metrics:
-            m = result.metrics[0]
-            worst = f"{m.name}={m.value:.3e}" + (f" (limit {m.threshold:.1e})" if m.threshold is not None else "")
-        print(f"{result.status.upper()} {worst}", flush=True)
-        results.append(result.to_dict())
-    summary = {s: sum(1 for r in results if r["status"] == s) for s in ("pass", "fail", "warn", "error")}
-    return {"dt": ctx.dt, "G": ctx.G, "reference": {"substeps": ctx.ref_substeps, "softening_km": ctx.ref_softening},
-            "summary": summary, "results": results}
