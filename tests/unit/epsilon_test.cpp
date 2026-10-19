@@ -51,7 +51,7 @@ namespace {
     void applyDirectGravity(NewtonianState& state)
     {
         physics::Octree octree;
-        physics::forces::Gravity::apply(state, 0.0, physics::forces::GravityMode::BruteForce, octree);
+        physics::forces::Gravity::apply(state, physics::forces::GravityMode::BruteForce, octree);
     }
 
     /// Acceleration of body 0 along +x, pulled by body 1 at distance d on the +x axis.

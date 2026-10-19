@@ -3,7 +3,7 @@
  *
  * Modes
  *   simulate  --lib L --scene S --dt D --frames F [--sample-every K] [--snapshots]
- *             [--reverse-at R] [--dt-schedule DT:FRAMES,...] [--G g] --out O
+ *             [--reverse-at R] [--dt-schedule DT:FRAMES,...] [--integrator NAME] [--G g] --out O
  *             Drives the library exactly like Core does (syncIn, update, publish per
  *             frame) and records conserved quantities and, optionally, full state
  *             snapshots at sample points.
@@ -28,6 +28,7 @@
 #include <vector>
 #include <nlohmann/json.hpp>
 #include "Contract.hpp"
+#include "Integrator.hpp"
 #include "Invariants.hpp"
 #include "Plugin.hpp"
 #include "Reference.hpp"
@@ -36,7 +37,7 @@
 
 namespace {
 
-    constexpr const char* RUNNER_VERSION = "1.1.0";
+    constexpr const char* RUNNER_VERSION = "1.2.0";
     constexpr double DEFAULT_G = 6.67430e-20; // km^3 kg^-1 s^-2, matches the module
 
     using json = nlohmann::json;
@@ -48,6 +49,7 @@ namespace {
             std::string scene;
             std::string out;
             std::string dtSchedule;
+            std::string integrator;
             double dt = 7200.0;
             double G = DEFAULT_G;
             double softening = 0.0;
@@ -68,7 +70,8 @@ namespace {
                   << "  --lib PATH --scene PATH --out PATH --dt SECONDS --frames N\n"
                   << "  --sample-every N --snapshots --reverse-at FRAME --no-potential\n"
                   << "  --substeps N --softening KM --G VALUE --warmup N --repeats N\n"
-                  << "  --dt-schedule DT:FRAMES[,DT:FRAMES...]  (simulate: overrides --dt and --frames)\n";
+                  << "  --dt-schedule DT:FRAMES[,DT:FRAMES...]  (simulate: overrides --dt and --frames)\n"
+                  << "  --integrator verlet|pefrl  (simulate, bench: SpecificDataPhysics::integrator)\n";
         std::exit(2);
     }
 
@@ -98,6 +101,8 @@ namespace {
                 o.dt = std::stod(need(i));
             else if (a == "--dt-schedule")
                 o.dtSchedule = need(i);
+            else if (a == "--integrator")
+                o.integrator = need(i);
             else if (a == "--G")
                 o.G = std::stod(need(i));
             else if (a == "--softening")
@@ -179,6 +184,8 @@ namespace {
         h["scene"] = o.scene;
         h["bodies"] = world.positions.size();
         h["dt"] = o.dt;
+        if (!o.integrator.empty())
+            h["integrator"] = o.integrator;
         h["frames"] = o.frames;
         if (!o.dtSchedule.empty())
             h["dt_schedule"] = o.dtSchedule;
@@ -198,6 +205,7 @@ namespace {
     {
         const qa::Schedule schedule = scheduleOf(o);
         qa::State world = qa::loadScene(o.scene);
+        qa::selectIntegrator(world, o.integrator);
         json out = header(o, world);
 
         qa::Plugin plugin(o.lib);
@@ -267,7 +275,8 @@ namespace {
 
     int runBench(const Options& o)
     {
-        const qa::State initial = qa::loadScene(o.scene);
+        qa::State initial = qa::loadScene(o.scene);
+        qa::selectIntegrator(initial, o.integrator);
         json out = header(o, initial);
         out["warmup"] = o.warmup;
         out["repeats"] = o.repeats;

@@ -1,0 +1,10 @@
+{
+  "_comment": "Override for config/thresholds.json selecting the PEFRL integrator (SpecificDataPhysics::integrator): ./physics-qa test --thresholds config/integrators/pefrl.json. PEFRL is fourth order: on the default e=0.3 orbit its error reaches double round-off below 3600 s, so convergence_order uses an e=0.9 orbit (measured orders 4.00 / 4.00 / 4.00). Every other limit stays the one calibrated on Verlet.",
+  "integrator": "pefrl",
+  "checks": {
+    "convergence_order": {
+      "expected_order": 4.0,
+      "eccentricity": 0.9
+    }
+  }
+}

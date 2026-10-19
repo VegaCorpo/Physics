@@ -370,6 +370,13 @@ def check_translation_invariance(ctx: Context, cfg: dict) -> Result:
     return res
 
 
+def _padding_scale(sample: dict) -> float:
+    positions = sample["positions"]
+    if len(positions) == 1:
+        return _norm(positions[0]) or 1.0
+    return _scene_scale(sample)
+
+
 def check_padding_sizes(ctx: Context, cfg: dict) -> Result:
     res = Result("padding_sizes", cfg.get("category", "robustness"))
     frames = int(cfg["frames"])
@@ -380,7 +387,7 @@ def check_padding_sizes(ctx: Context, cfg: dict) -> Result:
         sim = ctx.runner.simulate(scene, ctx.dt, frames, frames, tag=f"padding-{n}")
         ref = ctx.runner.reference(scene, ctx.dt, frames, frames, ctx.ref_substeps, softening=ctx.ref_softening,
                                    tag=f"padding-ref-{n}")
-        err = _max_rel_position_error(sim["samples"][-1], ref["samples"][-1])
+        err = _max_rel_position_error(sim["samples"][-1], ref["samples"][-1], _padding_scale(ref["samples"][-1]))
         if sim["samples"][-1]["non_finite"]:
             err = math.inf
         per_size.append((n, err))
