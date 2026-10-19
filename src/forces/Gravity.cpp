@@ -11,7 +11,7 @@
 
 //? Public methods
 
-void physics::forces::Gravity::apply(NewtonianState& state, [[maybe_unused]] double dt, GravityMode mode, Octree& tree)
+void physics::forces::Gravity::apply(NewtonianState& state, GravityMode mode, Octree& tree)
 {
     if (state.size() == 0)
         return;

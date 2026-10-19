@@ -1,14 +1,15 @@
 #pragma once
 
-#include <types/World.hpp>
-#include "components/NewtonianState.hpp"
+#include "integration/IIntegrator.hpp"
 
 namespace physics::integration {
-    class Verlet {
+    class Verlet : public IIntegrator {
         public:
-            static void preIntegrate(common::SpecificDataPhysics& world, NewtonianState& state, double dt);
-            static void postIntegrate(common::SpecificDataPhysics& world, NewtonianState& state, double dt);
+            void step(const Bodies& bodies, IAccelerationField& field, double duration) const override;
 
         private:
+            static constexpr double HALF = 0.5;
+
+            static void _refreshStaleForces(NewtonianState& state, IAccelerationField& field);
     };
 } // namespace physics::integration

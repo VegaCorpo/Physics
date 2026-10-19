@@ -25,11 +25,10 @@ namespace physics::forces {
              * @brief Apply gravitational forces to the bodies in the NewtonianState.
              *
              * @param state The NewtonianState containing the bodies and their properties.
-             * @param dt The time step for the simulation.
              * @param mode The gravity computation mode (BruteForce or BarnesHut).
              * @param tree The octree containing the spatial partitioning.
              */
-            static void apply(NewtonianState& state, double dt, GravityMode mode, Octree& tree);
+            static void apply(NewtonianState& state, GravityMode mode, Octree& tree);
 
             /**
              * @brief Compute the scalar mass from a given mass component.
