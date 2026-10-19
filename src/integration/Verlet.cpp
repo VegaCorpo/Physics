@@ -1,46 +1,21 @@
 #include "Verlet.hpp"
-#include "components/NewtonianState.hpp"
+#include "integration/Motion.hpp"
 
-void physics::integration::Verlet::preIntegrate(common::SpecificDataPhysics& world, NewtonianState& state, double dt)
+void physics::integration::Verlet::step(const Bodies& bodies, IAccelerationField& field, double duration) const
 {
-    const double halfDt = 0.5 * dt;
+    const double halfDuration = HALF * duration;
 
-    auto& vel = world.velocities;
-
-    auto& posX = state.posX;
-    auto& posY = state.posY;
-    auto& posZ = state.posZ;
-    auto& forceX = state.forceX;
-    auto& forceY = state.forceY;
-    auto& forceZ = state.forceZ;
-
-    for (size_t i = 0; i < state.size(); i += 1) {
-        vel[i].x += forceX[i] * halfDt;
-        vel[i].y += forceY[i] * halfDt;
-        vel[i].z += forceZ[i] * halfDt;
-
-        posX[i] += vel[i].x * dt;
-        posY[i] += vel[i].y * dt;
-        posZ[i] += vel[i].z * dt;
-
-        forceX[i] = 0;
-        forceY[i] = 0;
-        forceZ[i] = 0;
-    }
+    _refreshStaleForces(bodies.state, field);
+    motion::kick(bodies, halfDuration);
+    motion::drift(bodies, duration);
+    field.compute(bodies.state);
+    motion::kick(bodies, halfDuration);
 }
 
-void physics::integration::Verlet::postIntegrate(common::SpecificDataPhysics& world, NewtonianState& state, double dt)
+void physics::integration::Verlet::_refreshStaleForces(NewtonianState& state, IAccelerationField& field)
 {
-    const double halfDt = 0.5 * dt;
-
-    auto& vel = world.velocities;
-    const auto& forceX = state.forceX;
-    const auto& forceY = state.forceY;
-    const auto& forceZ = state.forceZ;
-
-    for (size_t i = 0; i < state.size(); i += 1) {
-        vel[i].x += forceX[i] * halfDt;
-        vel[i].y += forceY[i] * halfDt;
-        vel[i].z += forceZ[i] * halfDt;
-    }
+    if (!state.forcesStale())
+        return;
+    field.compute(state);
+    state.markForcesFresh();
 }

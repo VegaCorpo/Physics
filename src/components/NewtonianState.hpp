@@ -50,6 +50,8 @@ namespace physics {
 
             void markForcesFresh() noexcept { this->_forces_stale = false; }
 
+            void markForcesStale() noexcept { this->_forces_stale = true; }
+
             void syncIn(const common::SpecificDataPhysics& world)
             {
                 const std::size_t count = std::min(
