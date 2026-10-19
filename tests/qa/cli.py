@@ -37,10 +37,12 @@ def _prepare(args) -> build.Build:
     return b
 
 
-def _runner(b: build.Build, G: float, tag: str) -> Runner:
+def _runner(b: build.Build, thresholds: dict, tag: str) -> Runner:
     work = WORK_DIR / b.label / f"runs-{b.build_type}-{tag}"
     shutil.rmtree(work, ignore_errors=True)
-    return Runner(Path(b.runner), Path(b.lib), work, G)
+    runner = Runner(Path(b.runner), Path(b.lib), work, thresholds["G"])
+    runner.use_integrator(thresholds.get("integrator"))
+    return runner
 
 
 def _meta(b: build.Build, extra: dict) -> dict:
@@ -63,14 +65,14 @@ def cmd_run(args) -> int:
         _, unit_results = unit.run(exe)
     if not args.no_tests:
         thresholds = config.load_thresholds(args.thresholds)
-        ctx = checks.Context(_runner(b, thresholds["G"], "tests"), WORK_DIR / b.label / "scenes", thresholds["dt"],
+        ctx = checks.Context(_runner(b, thresholds, "tests"), WORK_DIR / b.label / "scenes", thresholds["dt"],
                              thresholds["G"], thresholds["reference"]["substeps"],
                              thresholds["reference"]["softening_km"])
         correctness = suite.run_all(ctx, thresholds, args.only)
         print(f"[tests] {correctness['summary']}")
     if not args.no_bench:
         plan = config.load_benchmark(args.benchmark)
-        runner = _runner(b, config.load_thresholds(args.thresholds)["G"], "bench")
+        runner = _runner(b, config.load_thresholds(args.thresholds), "bench")
         benchmark = bench.run(runner, plan, WORK_DIR / "scenes", args.bodies)
         engine = benchmark.get("engine")
     target = results.save(b.label, b.build_type, _meta(b, {"engine": engine}), correctness, benchmark, args.results,
