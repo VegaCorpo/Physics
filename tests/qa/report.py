@@ -148,6 +148,15 @@ UNIT_SUITES = {
     "Collider": ("Are all touching bodies detected, and only those?",
                  "The collision pairs found through the octree are compared with a brute-force check of every pair, "
                  "on hand-made cases (touching, separated, across octree cells) and on random clusters."),
+    "Integrator": ("Do the integrators move bodies as designed?",
+                   "Verlet and PEFRL are run on a spring whose exact motion is known. The tests check that Verlet "
+                   "is second order and PEFRL fourth order, how many times each computes the forces per step, that "
+                   "switching from PEFRL back to Verlet recomputes the forces, and that both can run backwards to "
+                   "their starting point."),
+    "IntegratorCatalog": ("Is the requested integrator the one used?",
+                          "The setting sent by the engine selects the integrator. These tests check that each "
+                          "setting gives the integrator of the right order, that Verlet is the default, and that "
+                          "an unknown value is refused."),
     "TimeStep": ("Is each update cut into the right sub-steps?",
                  "A long update chosen by the user (a day, a year…) is split into equal sub-steps of at most two "
                  "hours. These tests check the number and size of the sub-steps for many durations, that they "

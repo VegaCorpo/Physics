@@ -19,13 +19,17 @@ class Runner:
         self.work.mkdir(parents=True, exist_ok=True)
         self.G = G
         self._counter = 0
+        self._integrator_args: list[str] = []
+
+    def use_integrator(self, name: str | None) -> None:
+        self._integrator_args = ["--integrator", name] if name else []
 
     def _out(self, tag: str) -> Path:
         self._counter += 1
         return self.work / f"{self._counter:04d}-{tag}.json"
 
     def _exec(self, args: list[str], out: Path) -> dict:
-        cmd = [str(self.executable), *args, "--out", str(out), "--G", repr(self.G)]
+        cmd = [str(self.executable), *args, *self._integrator_args, "--out", str(out), "--G", repr(self.G)]
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode != 0:
             raise RunnerError(f"runner exited with {result.returncode}: {result.stderr.strip()}\n  cmd: {' '.join(cmd)}")

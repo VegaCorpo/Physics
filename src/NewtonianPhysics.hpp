@@ -4,8 +4,10 @@
 #include <interfaces/IPhysicsEngine.hpp>
 #include "collisions/collider.hpp"
 #include "components/NewtonianState.hpp"
-#include "spatial/Octree.hpp"
 #include "forces/Gravity.hpp"
+#include "forces/GravityField.hpp"
+#include "integration/IIntegrator.hpp"
+#include "integration/IntegratorCatalog.hpp"
 #include "integration/TimeStep.hpp"
 #include "types/World.hpp"
 #include "types/types.hpp"
@@ -63,21 +65,20 @@ namespace physics {
              * @return The name of the physics engine.
              */
             [[nodiscard]] std::string getName() const override { return "NewtonianPhysics"; }
-            [[nodiscard]] forces::GravityMode getGravityMode() const { return _gravityMode; }
-            void setGravityMode(forces::GravityMode mode) { _gravityMode = mode; }
+            [[nodiscard]] forces::GravityMode getGravityMode() const { return _gravity.mode(); }
+            void setGravityMode(forces::GravityMode mode) { _gravity.setMode(mode); }
 
         private:
             [[nodiscard]] bool
             _canAdvance(const std::expected<integration::SubSteps, integration::TimeStepError>& subSteps) const;
-            void _refreshStaleForces(double subStepDuration);
-            void _integrate(double subStepDuration);
+            void _advance(const integration::IIntegrator& integrator, const integration::SubSteps& subSteps);
             void _publishOrientations(common::WorldState& world, std::size_t count) const;
             common::SpecificDataPhysics _worldState;
             NewtonianState _newtonianState;
-            forces::GravityMode _gravityMode;
+            forces::GravityField _gravity;
+            integration::IntegratorCatalog _integrators;
             integration::TimeStep _timeStep;
 
-            Octree _octree;
             Collider _collider;
             common::ModuleState _state = common::ModuleState::RUNNING;
     };

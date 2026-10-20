@@ -62,6 +62,16 @@ if(EXISTS "${PHYSICS_SOURCE_DIR}/src/integration/TimeStep.cpp")
     )
 endif()
 
+if(EXISTS "${PHYSICS_SOURCE_DIR}/src/integration/Pefrl.cpp")
+    target_sources(physics_unit_tests PRIVATE
+        integrator_test.cpp
+        ${PHYSICS_SOURCE_DIR}/src/integration/Motion.cpp
+        ${PHYSICS_SOURCE_DIR}/src/integration/Verlet.cpp
+        ${PHYSICS_SOURCE_DIR}/src/integration/Pefrl.cpp
+        ${PHYSICS_SOURCE_DIR}/src/integration/IntegratorCatalog.cpp
+    )
+endif()
+
 target_compile_options(physics_unit_tests PRIVATE
     $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra>
 )

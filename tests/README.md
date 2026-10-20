@@ -81,6 +81,12 @@ every update into the smallest number of equal sub-steps of at most 7200 s (`src
 so the accuracy does not depend on the chosen scale; `convergence_order` therefore measures the order with
 dt levels at or below 7200 s. dt = 0 is a no-op, negative and non-finite dt are rejected (state unchanged).
 
+The integrator is chosen through `SpecificDataPhysics::integrator` (`common::IntegratorType`, Verlet by
+default; Core fills it from the registry context). `--thresholds config/integrators/pefrl.json` runs every
+check with PEFRL (fourth order): it sets `"integrator": "pefrl"`, which the runner forwards as
+`--integrator pefrl`, and measures `convergence_order` on an e = 0.9 orbit, because on the default orbit
+PEFRL reaches double round-off below 3600 s. Every other limit is the one calibrated on Verlet.
+
 The reference integrator is `runner/Reference.hpp`: classical RK4 in 80-bit long
 double on the unsoftened Newtonian problem. With 16 substeps per 7200 s frame its
 error is orders of magnitude below the module's double precision Verlet error.
@@ -109,6 +115,8 @@ test fails. The outcome of every test is stored in `results/<label>/<BuildType>/
 | `Octree.*` | permutation validity, leaves contain their bodies and partition them, leaf capacity, depth limit, rebuild |
 | `Epsilon.*` | softening length chosen by `NewtonianState::syncIn()`: a non-zero epsilon is kept, 0 derives `SOFTENING_RADIUS_RATIO` × smallest non-zero radius (order-independent, padding ignored, recomputed every sync), point masses fall back to `DEFAULT_EPSILON` |
 | `TimeStep.*` | how `integration::TimeStep::split()` cuts an update: one identical step up to 7200 s, the minimal number of equal sub-steps above (1 day → 12, 1 year → 4383), sub-steps never exceed the maximum and cover the frame exactly, dt = 0 needs none, negative / NaN / ±inf / overflowing durations and invalid maxima are rejected |
+| `Integrator.*` | Verlet and PEFRL driven by a fake spring field (exact solution known): measured order 2 and 4, PEFRL more accurate than Verlet at equal cost, 1 force evaluation per Verlet step (plus one refresh when the cache is stale) and 4 per PEFRL step, the cache refreshed when switching from PEFRL to Verlet, time reversibility |
+| `IntegratorCatalog.*` | each `common::IntegratorType` maps to the integrator of the right order, Verlet is the default, an unknown value is rejected |
 | `Softening.*` | `Gravity::apply()` follows the Plummer kernel with that epsilon; the derived value keeps the force within 1e-6 of Newton at contact distance and 1e-10 at orbital distances, and coincident bodies, self-interaction and padding never produce NaN |
 
 `./physics-qa overlaps SCENE...` applies the same contact rule to a scene file and
@@ -136,13 +144,13 @@ threads, as the module's TBB parallel loops expect.
 tests/
   physics-qa            entry point (python3 -m qa)
   CMakeLists.txt        standalone runner project (PHYSICS_SOURCE_DIR selects the Common version)
-  runner/               C++: Plugin.hpp (dlopen), Scene.hpp, Schedule.hpp (dt per update), Invariants.hpp,
+  runner/               C++: Plugin.hpp (dlopen), Scene.hpp, Schedule.hpp (dt per update), Integrator.hpp, Invariants.hpp,
                         Reference.hpp, main.cpp
   unit/                 C++ GoogleTest project compiling the module's Octree + Collider + Gravity (white-box)
   qa/                   Python: build.py, checks.py, timestep.py (time step checks), suite.py (check registry and
                         runner loop), bench.py, scenes.py, kepler.py, report.py, svg.py, cli.py,
                         unit.py (tests/unit driver), overlaps.py (scene contact diagnostics)
-  config/               thresholds.json, benchmark.json
+  config/               thresholds.json, benchmark.json, integrators/pefrl.json
   results/              committed JSON results per commit and build type
   .work/                worktrees, builds, generated scenes, raw runner output (ignored)
 ```
@@ -155,6 +163,8 @@ cmake -S . -B .work/runner -DPHYSICS_SOURCE_DIR=.. && cmake --build .work/runner
     --scene ../../scenes/simulation_1.json --dt 7200 --frames 4383 --sample-every 100 --snapshots --out sim.json
 .work/runner/physics_qa_runner simulate --lib ../build/liborbital_physics.so \
     --scene ../../scenes/simulation_1.json --dt-schedule 7200:120,86400:30,31557600:1 --sample-every 1 --snapshots --out sched.json
+.work/runner/physics_qa_runner bench --lib ../build/liborbital_physics.so --scene ../../scenes/solar_systems.json \
+    --dt 31557600 --frames 3 --warmup 1 --integrator pefrl --out year.json
 .work/runner/physics_qa_runner reference --scene ../../scenes/simulation_1.json --dt 7200 --frames 4383 --out ref.json
 .work/runner/physics_qa_runner bench --lib ../build/liborbital_physics.so --scene ../../scenes/benchmark_1000.json \
     --dt 7200 --frames 30 --warmup 3 --repeats 3 --out bench.json
