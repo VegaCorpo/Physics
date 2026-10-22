@@ -14,44 +14,39 @@ It receives a snapshot of the bodies, advances them under Newtonian gravity, and
 
 ## Architecture
 
-### Module structure
+### Module lifecycle
 
-Core loads the library, calls `get_engine()`, then calls `init(world)` once and `update(dt)` followed by `publish()` at every tick of its physics thread. The module works on a private copy of the world, so it runs alongside the other modules without locks.
+Core loads the library and drives the module from its own physics thread. The module works on a private copy of the world, so it runs alongside the other modules without locks.
 
-`NewtonianPhysics` only orchestrates its collaborators. The two extension points are small interfaces: `IIntegrator` (how time advances) and `IAccelerationField` (where accelerations come from).
+`NewtonianPhysics` implements `common::IPhysicsEngine` and only orchestrates its collaborators (`TimeStep`, `IntegratorCatalog`, `GravityField`, `Collider`). The two extension points are small interfaces: `IIntegrator` (how time advances, implemented by `Verlet` and `Pefrl`) and `IAccelerationField` (where accelerations come from, implemented by `GravityField`).
 
 ```mermaid
-classDiagram
-    class IPhysicsEngine {
-        <<interface>>
-    }
-    class IIntegrator {
-        <<interface>>
-        +step(bodies, field, h)
-    }
-    class IAccelerationField {
-        <<interface>>
-        +compute(state)
-    }
+flowchart TD
+    Start(["Core loads the plugin"]) --> Create["Create the engine<br>get_engine()"]
+    Create --> Init[/"Receive the initial world<br>init(world)"/]
+    Init --> Copy["Store a private copy of the world"]
+    Copy --> Running{"Simulation running?"}
+    Running -->|Yes| Update[["Update one frame<br>update(dt)"]]
+    Update --> Publish[/"Return the new world state<br>publish()"/]
+    Publish --> Running
+    Running -->|No| Shutdown["Shut down<br>shutdown()"]
+    Shutdown --> End(["End of simulation"])
 
-    IPhysicsEngine <|.. NewtonianPhysics
-    NewtonianPhysics *-- TimeStep
-    NewtonianPhysics *-- IntegratorCatalog
-    NewtonianPhysics *-- GravityField
-    NewtonianPhysics *-- Collider
-    NewtonianPhysics *-- NewtonianState
-    IntegratorCatalog *-- IIntegrator
-    IIntegrator <|.. Verlet
-    IIntegrator <|.. Pefrl
-    IIntegrator ..> IAccelerationField : uses
-    IAccelerationField <|.. GravityField
-    GravityField *-- Octree
-    Collider ..> Octree : reads
+    classDef startNode fill:#d4edda,stroke:#2e8b57,stroke-width:2px,color:#000
+    classDef endNode fill:#f8d7da,stroke:#c0392b,stroke-width:2px,color:#000
+    classDef process fill:#dbe9ff,stroke:#3b6fd8,stroke-width:1.5px,color:#000
+    classDef io fill:#e8dcf5,stroke:#8250c8,stroke-width:1.5px,color:#000
+    classDef decision fill:#fff2b3,stroke:#d9a400,stroke-width:1.5px,color:#000
+    classDef sub fill:#d5f5ee,stroke:#1a9a7c,stroke-width:1.5px,color:#000
+    class Start startNode
+    class End endNode
+    class Create,Copy,Shutdown process
+    class Init,Publish io
+    class Running decision
+    class Update sub
 ```
 
 ### Frame update
-
-Flowchart symbols follow ISO 5807: terminator (start / end), rectangle (process), diamond (decision), hexagon (loop), double-sided rectangle (predefined process).
 
 ```mermaid
 flowchart TD
@@ -138,19 +133,6 @@ flowchart TD
 ### Data layout
 
 Common's types are used at the module boundary only. Internally, positions, masses, radii and accelerations are stored as 64-byte aligned arrays (one per axis) padded with zero-mass slots to whole SIMD blocks, so the force kernels vectorize without a remainder loop.
-
-## Source layout
-
-```
-src/
-├── PhysicsAPI.*          get_engine() factory
-├── NewtonianPhysics.*    IPhysicsEngine implementation, orchestrates a frame
-├── components/           NewtonianState (SoA)
-├── forces/               Gravity solvers, GravityField
-├── integration/          Verlet, PEFRL, IntegratorCatalog, TimeStep
-├── spatial/              Octree
-└── collisions/           Collider
-```
 
 ## Build
 
