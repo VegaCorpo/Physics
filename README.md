@@ -8,7 +8,7 @@ It receives a snapshot of the bodies, advances them under Newtonian gravity, and
 
 - **Gravity**: Barnes–Hut octree, $O(N \log N)$ (default), or SIMD brute force, $O(N^2)$
 - **Integrators**: velocity Verlet (order 2) or PEFRL (order 4), both symplectic, chosen per scene
-- **Stable time stepping**: any `dt` from Core is split into equal sub-steps of at most 7200 s
+- **Fixed time stepping**: each integrator has a fixed step of 7200 s per force evaluation (Verlet 7200 s, PEFRL 28800 s), announced to Core through `stepDuration()`
 - **Rotation** of each body and **contact detection** (sphere overlap)
 - **Parallel and isolated**: multithreaded and vectorized, with no shared state with other modules
 
@@ -77,7 +77,7 @@ flowchart TD
     class Step sub
 ```
 
-`dt` is split into $n = \lceil dt / 7200 \rceil$ equal sub-steps. A non-finite or negative `dt` is rejected, and a paused module skips the frame.
+`dt` is split into $n = \lceil dt / h_{max} \rceil$ equal sub-steps, where $h_{max} = 7200\,\text{s} \times$ the force evaluations per step of the integrator, so every integrator costs the same per simulated second. Core always requests whole multiples of `stepDuration()` $= h_{max}$, which keeps the step fixed. A non-finite or negative `dt` is rejected, and a paused module skips the frame.
 
 ### Integrators
 

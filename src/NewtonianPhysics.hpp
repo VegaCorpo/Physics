@@ -9,8 +9,8 @@
 #include "integration/IIntegrator.hpp"
 #include "integration/IntegratorCatalog.hpp"
 #include "integration/TimeStep.hpp"
-#include "types/World.hpp"
 #include "types/types.hpp"
+#include "types/World.hpp"
 
 namespace physics {
     class NewtonianPhysics : public common::IPhysicsEngine {
@@ -33,6 +33,8 @@ namespace physics {
              * @param dt The time step in seconds.
              */
             void update(double dt) override;
+
+            [[nodiscard]] double stepDuration() const override;
 
             void physicsPause() override { this->_state = common::ModuleState::PAUSE; };
 
@@ -71,13 +73,13 @@ namespace physics {
         private:
             [[nodiscard]] bool
             _canAdvance(const std::expected<integration::SubSteps, integration::TimeStepError>& subSteps) const;
+            [[nodiscard]] static integration::TimeStep _timeStepOf(const integration::IIntegrator& integrator);
             void _advance(const integration::IIntegrator& integrator, const integration::SubSteps& subSteps);
             void _publishOrientations(common::WorldState& world, std::size_t count) const;
             common::SpecificDataPhysics _worldState;
             NewtonianState _newtonianState;
             forces::GravityField _gravity;
             integration::IntegratorCatalog _integrators;
-            integration::TimeStep _timeStep;
 
             Collider _collider;
             common::ModuleState _state = common::ModuleState::RUNNING;
