@@ -20,6 +20,9 @@ namespace {
     constexpr std::size_t SUB_STEPS_PER_DAY = 12;
     constexpr std::size_t SUB_STEPS_PER_JULIAN_YEAR = 4383;
     constexpr std::size_t HALVES = 2;
+    constexpr std::size_t SINGLE_FORCE_EVALUATION = 1;
+    constexpr std::size_t FOUR_FORCE_EVALUATIONS = 4;
+    constexpr std::size_t NO_FORCE_EVALUATION = 0;
     constexpr double ONE_SECOND = 1.0;
     constexpr double RELATIVE_ROUNDING = 4.0 * std::numeric_limits<double>::epsilon();
     constexpr std::array DEFAULT_FRAME_SAMPLES = {0.001,   1.0,     7199.999,  7200.001,
@@ -146,6 +149,22 @@ TEST(TimeStep, LongestAcceptedFrameUsesTheMaximumSubStepCount)
     const double longest = MAX_SUB_STEP * static_cast<double>(TimeStep::MAX_SUB_STEP_COUNT);
 
     EXPECT_EQ(splitOrFail(TimeStep{}, longest).count, TimeStep::MAX_SUB_STEP_COUNT);
+}
+
+TEST(TimeStep, MaxSubStepGrowsWithTheForceEvaluationsPerStep)
+{
+    const std::expected<TimeStep, TimeStepError> single = TimeStep::forForceEvaluations(SINGLE_FORCE_EVALUATION);
+    const std::expected<TimeStep, TimeStepError> four = TimeStep::forForceEvaluations(FOUR_FORCE_EVALUATIONS);
+
+    ASSERT_TRUE(single.has_value());
+    ASSERT_TRUE(four.has_value());
+    EXPECT_EQ(single->maxSubStep(), MAX_SUB_STEP);
+    EXPECT_EQ(four->maxSubStep(), MAX_SUB_STEP * static_cast<double>(FOUR_FORCE_EVALUATIONS));
+}
+
+TEST(TimeStep, IntegratorWithoutForceEvaluationIsRejected)
+{
+    EXPECT_EQ(TimeStep::forForceEvaluations(NO_FORCE_EVALUATION).error(), TimeStepError::ZERO_SUB_STEP);
 }
 
 TEST(TimeStep, InvalidMaxSubStepIsRejected)
