@@ -77,9 +77,10 @@ per-body magnitudes when the total can be zero.
 | `timestep_zero_dt`, `timestep_invalid_dt` | timestep | dt = 0 and negative / NaN / ±inf dt leave the state untouched and finite | invalid time steps corrupt the scene |
 
 The time step is chosen by the user (via the UI and Core) and handed to `update(dt)`. The module splits
-every update into the smallest number of equal sub-steps of at most 7200 s (`src/integration/TimeStep`),
-so the accuracy does not depend on the chosen scale; `convergence_order` therefore measures the order with
-dt levels at or below 7200 s. dt = 0 is a no-op, negative and non-finite dt are rejected (state unchanged).
+every update into the smallest number of equal sub-steps of at most 7200 s per force evaluation of the
+integrator (7200 s for Verlet, 28800 s for PEFRL, `src/integration/TimeStep`), so the accuracy does not
+depend on the chosen scale; `convergence_order` therefore measures the order with dt levels at or below
+7200 s, and `config/integrators/pefrl.json` runs `timestep_split_invariance` on 28800 s updates. dt = 0 is a no-op, negative and non-finite dt are rejected (state unchanged).
 
 The integrator is chosen through `SpecificDataPhysics::integrator` (`common::IntegratorType`, Verlet by
 default; Core fills it from the registry context). `--thresholds config/integrators/pefrl.json` runs every
@@ -137,6 +138,9 @@ Deltas below `min_ms_for_verdict` are shown but never judged.
 For stable numbers, run on an idle machine with the `performance` CPU governor;
 the report shows a warning otherwise. The benchmark runs with all hardware
 threads, as the module's TBB parallel loops expect.
+
+[PERFORMANCE.md](PERFORMANCE.md) explains how to compare integrators, time steps and scene sizes, and
+records the current baseline.
 
 ## Layout
 

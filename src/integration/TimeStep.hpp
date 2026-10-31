@@ -26,8 +26,12 @@ namespace physics::integration {
             TimeStep() = default;
 
             [[nodiscard]] static std::expected<TimeStep, TimeStepError> withMaxSubStep(double maxSubStep);
+            [[nodiscard]] static std::expected<TimeStep, TimeStepError>
+            forForceEvaluations(std::size_t evaluationsPerStep);
 
             [[nodiscard]] std::expected<SubSteps, TimeStepError> split(double frameDuration) const;
+
+            [[nodiscard]] double maxSubStep() const noexcept { return this->_maxSubStep; }
 
         private:
             explicit TimeStep(double maxSubStep) : _maxSubStep(maxSubStep) {}

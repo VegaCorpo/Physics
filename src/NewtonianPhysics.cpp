@@ -22,10 +22,14 @@ void physics::NewtonianPhysics::init(common::SpecificDataPhysics world)
 
 void physics::NewtonianPhysics::update(double dt)
 {
-    const std::expected<integration::SubSteps, integration::TimeStepError> subSteps = this->_timeStep.split(dt);
     const auto integrator = this->_integrators.find(this->_worldState.integrator);
 
-    if (!this->_canAdvance(subSteps) || !integrator.has_value())
+    if (!integrator.has_value())
+        return;
+    const std::expected<integration::SubSteps, integration::TimeStepError> subSteps =
+        _timeStepOf(integrator->get()).split(dt);
+
+    if (!this->_canAdvance(subSteps))
         return;
     this->_newtonianState.syncIn(this->_worldState);
     this->_advance(integrator->get(), *subSteps);
@@ -33,6 +37,15 @@ void physics::NewtonianPhysics::update(double dt)
 
     this->_collider.checkCollisions(this->_newtonianState, this->_gravity.octree());
     this->_newtonianState.syncOut(this->_worldState);
+}
+
+double physics::NewtonianPhysics::stepDuration() const
+{
+    const auto integrator = this->_integrators.find(this->_worldState.integrator);
+
+    if (!integrator.has_value())
+        return integration::TimeStep::DEFAULT_MAX_SUB_STEP;
+    return _timeStepOf(integrator->get()).maxSubStep();
 }
 
 void physics::NewtonianPhysics::shutdown()
@@ -70,6 +83,12 @@ bool physics::NewtonianPhysics::_canAdvance(
     const std::expected<integration::SubSteps, integration::TimeStepError>& subSteps) const
 {
     return this->_state == common::ModuleState::RUNNING && subSteps.has_value() && !subSteps->empty();
+}
+
+physics::integration::TimeStep physics::NewtonianPhysics::_timeStepOf(const integration::IIntegrator& integrator)
+{
+    return integration::TimeStep::forForceEvaluations(integrator.forceEvaluationsPerStep())
+        .value_or(integration::TimeStep{});
 }
 
 void physics::NewtonianPhysics::_advance(const integration::IIntegrator& integrator,

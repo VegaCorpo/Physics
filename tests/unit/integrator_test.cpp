@@ -150,6 +150,15 @@ TEST(Integrator, PefrlEvaluatesForcesFourTimesAndLeavesThemStale)
     EXPECT_EQ(evaluationsForOneStep(Pefrl{}, oscillator), PEFRL_EVALUATIONS_PER_STEP);
 }
 
+TEST(Integrator, DeclaredCostMatchesTheMeasuredForceEvaluations)
+{
+    Oscillator oscillator;
+
+    EXPECT_EQ(Verlet{}.forceEvaluationsPerStep(), VERLET_EVALUATIONS_PER_STEP);
+    EXPECT_EQ(Pefrl{}.forceEvaluationsPerStep(), PEFRL_EVALUATIONS_PER_STEP);
+    EXPECT_EQ(evaluationsForOneStep(Pefrl{}, oscillator), Pefrl{}.forceEvaluationsPerStep());
+}
+
 TEST(Integrator, SwitchingFromPefrlToVerletRefreshesTheForces)
 {
     Oscillator oscillator;

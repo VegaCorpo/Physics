@@ -1,0 +1,4 @@
+{
+  "_comment": "Override for config/thresholds.json selecting the velocity Verlet integrator (SpecificDataPhysics::integrator): ./physics-qa run --thresholds config/integrators/verlet.json. Common's DEFAULT_INTEGRATOR is PEFRL, so a run without an integrator override measures PEFRL. Every limit is the one calibrated on Verlet.",
+  "integrator": "verlet"
+}

@@ -12,6 +12,12 @@ auto physics::integration::TimeStep::withMaxSubStep(double maxSubStep) -> std::e
     return TimeStep(*validated);
 }
 
+auto physics::integration::TimeStep::forForceEvaluations(std::size_t evaluationsPerStep)
+    -> std::expected<TimeStep, TimeStepError>
+{
+    return withMaxSubStep(DEFAULT_MAX_SUB_STEP * static_cast<double>(evaluationsPerStep));
+}
+
 auto physics::integration::TimeStep::split(double frameDuration) const -> std::expected<SubSteps, TimeStepError>
 {
     return _validate(frameDuration).and_then([this](double duration) { return this->_divide(duration); });
