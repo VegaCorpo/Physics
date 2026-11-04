@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(orbital_physics)
+project(orbital_physics VERSION 1.0.0)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
@@ -80,4 +80,9 @@ target_link_libraries(orbital_physics PRIVATE
 target_include_directories(orbital_physics PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${Common_SOURCE_DIR}/include
+)
+
+target_compile_definitions(orbital_physics PRIVATE
+    ORBITAL_MODULE_NAME="${PROJECT_NAME}"
+    ORBITAL_MODULE_VERSION="${PROJECT_VERSION}"
 )
